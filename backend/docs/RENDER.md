@@ -52,6 +52,36 @@ rotation. Startup restores the key to `/tmp/ai-creator-data/master.key` if neede
 to replace a different key already on disk. A valid but incorrect key cannot be
 detected on an empty disk, so copy the original exactly.
 
+On Windows, run this in PowerShell from the workspace root. It validates the
+existing file and copies one encoded value without displaying the secret:
+
+```powershell
+$taskKeyPath = Join-Path (Get-Location) 'backend/data/master.key'
+$taskKeyBytes = [System.IO.File]::ReadAllBytes($taskKeyPath)
+if ($taskKeyBytes.Length -ne 32) { throw 'The original master.key must contain exactly 32 bytes.' }
+$taskEncodedKey = [Convert]::ToBase64String($taskKeyBytes)
+Set-Clipboard -Value $taskEncodedKey
+Write-Host "Copied one $($taskEncodedKey.Length)-character key value."
+```
+
+### Troubleshooting master-key startup errors
+
+The value must be one 44-character standard Base64 string ending in `=`.
+Characters `+` and `/` are valid; do not replace them. Clear the whole Render
+`MASTER_KEY_BASE64` value field before pasting once. Do not include quotes,
+`MASTER_KEY_BASE64=`, extra spaces inside the value, or a second encoded key.
+
+Set it under the web service's **Environment Variables**, using the exact name
+`MASTER_KEY_BASE64`, then choose **Save and deploy**. A secret file or an ignored
+local `.env` does not populate this environment variable. A service-level value
+overrides a linked environment group's value, so check the web service itself.
+
+Startup errors report only the problem and character count, never the secret.
+An 88-character value contains twice the expected number of characters, often
+from pasting twice. If the logs still show the older generic error, deploy the
+commit containing these diagnostics. Do not bypass validation or generate a new
+key to use with an existing database; restore the matching original from backup.
+
 ## 3. Create the Render service
 
 1. Open Render and choose **New → Blueprint**.

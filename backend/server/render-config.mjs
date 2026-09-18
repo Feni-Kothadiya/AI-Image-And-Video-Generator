@@ -21,9 +21,16 @@ export function prepareRender(env = process.env) {
   if (!["0", "1"].includes(workers))
     throw new Error("BACKGROUND_WORKERS_ENABLED must be 0 or 1.");
   const encoded = env.MASTER_KEY_BASE64?.trim() || "";
+  const keyHelp = "Copy the Base64 encoding of the original backend/data/master.key into Render's MASTER_KEY_BASE64 value, then save and deploy. See backend/docs/RENDER.md.";
+  if (!encoded)
+    throw new Error(`MASTER_KEY_BASE64 is missing or empty. ${keyHelp}`);
+  if (encoded.length !== 44)
+    throw new Error(`MASTER_KEY_BASE64 has ${encoded.length} characters; expected exactly 44 for a 32-byte key. Paste one value only, without quotes or the variable name. ${keyHelp}`);
+  if (!/^[A-Za-z0-9+/]{43}=$/.test(encoded))
+    throw new Error(`MASTER_KEY_BASE64 has an invalid Base64 format. Expected letters, digits, + or /, with one = at the end and no internal spaces or line breaks. ${keyHelp}`);
   const key = Buffer.from(encoded, "base64");
   if (key.length !== 32 || key.toString("base64") !== encoded)
-    throw new Error("MASTER_KEY_BASE64 must encode the existing 32-byte master.key.");
+    throw new Error(`MASTER_KEY_BASE64 is not the canonical Base64 encoding of a 32-byte key. ${keyHelp}`);
   const filename = join(env.DATA_DIR, "master.key");
   if (existsSync(filename)) {
     const stored = readFileSync(filename);
