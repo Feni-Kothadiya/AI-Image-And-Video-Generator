@@ -24,6 +24,37 @@ On Windows, ensure the data folder's NTFS permissions allow only the server owne
 Optional initial setup environment: ADMIN_EMAIL, ADMIN_PASSWORD (12+ characters), DATA_DIR.
 Do not commit those values. There is no shared/default admin password.
 
+### Reset an existing administrator
+
+From `backend`, set `ADMIN_LOGIN` and `ADMIN_PASSWORD` temporarily, then run
+`npm run admin:reset`. It uses `DATABASE_URL` from `.env` for PostgreSQL, or
+`DATA_DIR/studio.sqlite` for SQLite when no URL is configured. Use the same
+database as the deployed service. The reset preserves the account ID and data,
+reactivates the administrator, revokes its existing sessions, and records an
+audit event. It does not alter the encryption key. Reset passwords may contain
+8 to 128 characters; dashboard password changes still require 12 characters.
+
+For Windows Command Prompt, from the workspace root:
+
+```cmd
+set "ADMIN_LOGIN=admin"
+set "ADMIN_PASSWORD=<your requested password>"
+npm --prefix backend run admin:reset
+set "ADMIN_LOGIN="
+set "ADMIN_PASSWORD="
+```
+
+For a Render shell, after deploying the reset command:
+
+```sh
+ADMIN_LOGIN=admin ADMIN_PASSWORD='<your requested password>' node backend/server/reset-admin.mjs
+```
+
+If multiple administrators exist, also set `ADMIN_CURRENT_LOGIN` to the existing
+login ID or email of the account to reset. The command refuses to take over a
+login belonging to another account. Deploy the updated backend and rebuild the
+dashboard to sign in with a username such as `admin` instead of an email.
+
 The backend serves the sibling frontend/dist compiled dashboard at http://localhost:4000.
 Its default bind address is 127.0.0.1. The mobile USB script forwards port 4000 to the phone.
 If running Vite separately, set ADMIN_ORIGIN=http://localhost:5173 for that development session;

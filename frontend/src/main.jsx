@@ -305,8 +305,8 @@ function Login({ onLogin }) {
             </div>
           )}
           <Field
-            label="Admin email"
-            type="email"
+            label="Admin login ID or email"
+            type="text"
             autoComplete="username"
             value={email}
             required
@@ -318,7 +318,7 @@ function Login({ onLogin }) {
             autoComplete="current-password"
             value={password}
             required
-            minLength={12}
+            minLength={1}
             onChange={(e) => setPassword(e.target.value)}
           />
           <Button variant="primary" disabled={busy} icon={ArrowUpRight}>

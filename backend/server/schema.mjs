@@ -199,6 +199,13 @@ export const configSchema = z
         message: "Home sections must match an image or video category.",
       });
   });
+export const adminLoginIdSchema = z.string().trim().min(1).max(254)
+  .regex(/^[^\s]+$/, "Enter a login ID or email without spaces.")
+  .transform((v) => v.toLowerCase());
+export const adminCredentialsSchema = z.object({
+  email: adminLoginIdSchema,
+  password: z.string().min(1).max(128),
+}).strict();
 export const credentialsSchema = z
   .object({
     email: z

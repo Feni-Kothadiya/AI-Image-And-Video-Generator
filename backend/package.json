@@ -6,6 +6,7 @@
     "node": ">=22.13.0"
   },
   "scripts": {
+    "admin:reset": "node --env-file-if-exists=.env server/reset-admin.mjs",
     "billing:setup": "node --env-file-if-exists=.env server/setup-billing.mjs",
     "templates:install": "node --env-file-if-exists=.env server/install-template-artwork.mjs",
     "fal:setup": "node --env-file-if-exists=.env server/setup-fal.mjs",

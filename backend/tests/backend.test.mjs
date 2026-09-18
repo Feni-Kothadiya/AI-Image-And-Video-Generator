@@ -109,6 +109,55 @@ async function fixture(
   };
   return { app, db, admin, guest, headers, adminId, storage, dir };
 }
+test("admin reset supports username login, preserves the account, and revokes old sessions", async (t) => {
+  const { resetAdmin } = await import("../server/admin-reset.mjs");
+  const { verifyPassword } = await import("../server/security.mjs");
+  const { app, db, admin, adminId, guest, headers } = await fixture(t);
+  const other = await guest();
+  await db.prepare("UPDATE users SET status='suspended',coins=25 WHERE id=?").run(adminId);
+  await resetAdmin(db, { login: "Admin", password: "admin@123" });
+  const account = await db.prepare("SELECT * FROM users WHERE id=?").get(adminId);
+  assert.equal(account.email, "admin");
+  assert.equal(account.role, "admin");
+  assert.equal(account.status, "active");
+  assert.equal(account.coins, 25);
+  assert.notEqual(account.password, "admin@123");
+  assert.equal(await verifyPassword("admin@123", account.password), true);
+  assert.equal((await admin("/overview")).statusCode, 401);
+  assert.equal((await other.call("/api/me")).statusCode, 200);
+  const login = (email, password) => app.inject({
+    method: "POST", url: "/api/admin/login", headers: { origin: headers.origin },
+    payload: { email, password },
+  });
+  assert.equal((await login("owner@example.com", "test-password-12345")).statusCode, 401);
+  assert.equal((await login("admin", "incorrect-password")).statusCode, 401);
+  const response = await login(" ADMIN ", "admin@123");
+  assert.equal(response.statusCode, 200, response.body);
+  assert.equal(response.json().user.id, adminId);
+  assert.equal(response.cookies[0].httpOnly, true);
+  const log = await db.prepare("SELECT * FROM audit WHERE action='admin.credentials.reset'").get();
+  assert.equal(log.actor, adminId);
+  assert.equal(log.detail.includes("admin@123"), false);
+});
+
+test("admin reset refuses conflicting logins and ambiguous administrators", async (t) => {
+  const { resetAdmin } = await import("../server/admin-reset.mjs");
+  const { db, adminId, admin } = await fixture(t);
+  const original = await db.prepare("SELECT * FROM users WHERE id=?").get(adminId);
+  await db.prepare("INSERT INTO users(id,email,password,role,created_at) VALUES(?,?,?,'user',?)")
+    .run(randomUUID(), "admin", "unused", now());
+  await assert.rejects(resetAdmin(db, { login: "admin", password: "admin@123" }), /belongs to another account/);
+  assert.deepEqual(await db.prepare("SELECT * FROM users WHERE id=?").get(adminId), original);
+  assert.equal((await admin("/overview")).statusCode, 200);
+  await db.prepare("INSERT INTO users(id,email,password,role,created_at) VALUES(?,?,?,'admin',?)")
+    .run(randomUUID(), "second@example.com", "unused", now());
+  await assert.rejects(resetAdmin(db, { login: "owner", password: "admin@123" }), /Multiple administrators/);
+  await resetAdmin(db, { login: "owner", password: "admin@123", currentLogin: "owner@example.com" });
+  assert.equal((await db.prepare("SELECT email FROM users WHERE id=?").get(adminId)).email, "owner");
+  await assert.rejects(resetAdmin(db, { login: "owner", password: "admin@123", currentLogin: "missing" }), /No matching administrator/);
+  await assert.rejects(resetAdmin(db, { login: "owner", password: "short" }), /8 to 128/);
+});
+
 test("bundled images retain their URLs after verified R2 migration and reruns", async (t) => {
   const { fakeR2 } = await import("./helpers/r2.mjs");
   const r2 = fakeR2();

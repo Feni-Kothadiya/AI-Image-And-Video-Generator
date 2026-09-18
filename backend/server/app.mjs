@@ -24,6 +24,7 @@ import {
 import {
   configSchema,
   credentialsSchema,
+  adminCredentialsSchema,
   integrationSchema,
   parse,
   fail,
@@ -604,7 +605,7 @@ export async function buildApp(options = {}) {
       .send(await storage.read(upload));
   });
   app.post("/api/admin/login", { config: limited }, async (req, reply) => {
-    const input = parse(credentialsSchema, req.body);
+    const input = parse(adminCredentialsSchema, req.body);
     const user = await db
       .prepare("SELECT * FROM users WHERE email=? AND role='admin'")
       .get(input.email);
@@ -613,7 +614,7 @@ export async function buildApp(options = {}) {
       !user ||
       user.status !== "active"
     )
-      fail(401, "Email or password is incorrect.");
+      fail(401, "Login ID or password is incorrect.");
     const session = await newSession(db, user.id, true);
     reply.setCookie("admin_session", session.token, {
       httpOnly: true,
