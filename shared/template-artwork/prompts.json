@@ -1,0 +1,185 @@
+{
+  "generator": "built-in image_gen (no fal API)",
+  "assets": [
+    {
+      "id": "p0",
+      "category": "image/studio",
+      "title": "Soft light",
+      "prompt": "Use case: photorealistic-natural. Create ONE finished photographic image for a premium photo/video template catalog. Vertical portrait 2:3 composition, edge-to-edge image, high resolution. Main subject comfortably centered with safe space around head and hands for a rounded card crop. A beautiful original adult Indian woman in a simple ivory blouse, waist-up editorial studio portrait, warm taupe backdrop, soft side window light, relaxed confident expression, natural skin texture. Original fictional people, realistic expressive eyes, believable hands and anatomy, natural skin and fabric texture, polished professional photography rather than illustration. Match the feel of high-quality mobile portrait-template catalogs. No UI, no borders, no collage, no split panels, no logos, no watermarks, no typography. This is a still photograph."
+    },
+    {
+      "id": "p1",
+      "category": "image/studio",
+      "title": "Neon nights",
+      "prompt": "Use case: photorealistic-natural. Create ONE finished photographic image for a premium photo/video template catalog. Vertical portrait 2:3 composition, edge-to-edge image, high resolution. Main subject comfortably centered with safe space around head and hands for a rounded card crop. An original adult East Asian woman with a short dark bob wearing a tailored black coat on a rainy city street at blue hour, blue and magenta neon bokeh, cinematic fashion portrait, no readable signage. Original fictional people, realistic expressive eyes, believable hands and anatomy, natural skin and fabric texture, polished professional photography rather than illustration. Match the feel of high-quality mobile portrait-template catalogs. No UI, no borders, no collage, no split panels, no logos, no watermarks, no typography. This is a still photograph."
+    },
+    {
+      "id": "p2",
+      "category": "image/studio",
+      "title": "Golden muse",
+      "prompt": "Use case: photorealistic-natural. Create ONE finished photographic image for a premium photo/video template catalog. Vertical portrait 2:3 composition, edge-to-edge image, high resolution. Main subject comfortably centered with safe space around head and hands for a rounded card crop. An original adult Indian woman in a flowing pale peach dress holding a small bunch of daisies, natural golden-hour sunlight, flowers and soft green garden background, refined editorial portrait. Original fictional people, realistic expressive eyes, believable hands and anatomy, natural skin and fabric texture, polished professional photography rather than illustration. Match the feel of high-quality mobile portrait-template catalogs. No UI, no borders, no collage, no split panels, no logos, no watermarks, no typography. This is a still photograph."
+    },
+    {
+      "id": "p3",
+      "category": "image/studio",
+      "title": "Two of a kind",
+      "prompt": "Use case: photorealistic-natural. Create ONE finished photographic image for a premium photo/video template catalog. Vertical portrait 2:3 composition, edge-to-edge image, high resolution. Main subject comfortably centered with safe space around head and hands for a rounded card crop. An original adult South Asian couple in coordinated ivory and charcoal casual clothes, close warm studio portrait together, subtle smiles, neutral brown seamless backdrop, realistic skin texture and tender connection. Original fictional people, realistic expressive eyes, believable hands and anatomy, natural skin and fabric texture, polished professional photography rather than illustration. Match the feel of high-quality mobile portrait-template catalogs. No UI, no borders, no collage, no split panels, no logos, no watermarks, no typography. This is a still photograph."
+    },
+    {
+      "id": "p4",
+      "category": "image/prank",
+      "title": "Tiny world",
+      "prompt": "Use case: photorealistic-natural. Create ONE finished photographic image for a premium photo/video template catalog. Vertical portrait 2:3 composition, edge-to-edge image, high resolution. Main subject comfortably centered with safe space around head and hands for a rounded card crop. Playful photoreal miniature-world scene: an original adult woman in casual blue jeans seated comfortably on the rim of an oversized porcelain coffee cup on a sunny cafe table, enormous croissant nearby, imaginative but believable scale and shadows, happy charming mood. Original fictional people, realistic expressive eyes, believable hands and anatomy, natural skin and fabric texture, polished professional photography rather than illustration. Match the feel of high-quality mobile portrait-template catalogs. No UI, no borders, no collage, no split panels, no logos, no watermarks, no typography. This is a still photograph."
+    },
+    {
+      "id": "p5",
+      "category": "image/graduation-season",
+      "title": "Your next chapter",
+      "prompt": "Use case: photorealistic-natural. Create ONE finished photographic image for a premium photo/video template catalog. Vertical portrait 2:3 composition, edge-to-edge image, high resolution. Main subject comfortably centered with safe space around head and hands for a rounded card crop. An original adult Indian female graduate in a black graduation gown, mortarboard and golden stole, holding a rolled diploma tied with red ribbon, warmly smiling on a sunlit historic university campus, lush blurred trees. Original fictional people, realistic expressive eyes, believable hands and anatomy, natural skin and fabric texture, polished professional photography rather than illustration. Match the feel of high-quality mobile portrait-template catalogs. No UI, no borders, no collage, no split panels, no logos, no watermarks, no typography. This is a still photograph."
+    },
+    {
+      "id": "p6",
+      "category": "image/moments-reborn",
+      "title": "Memories restored",
+      "prompt": "Use case: photorealistic-natural. Create ONE finished photographic image for a premium photo/video template catalog. Vertical portrait 2:3 composition, edge-to-edge image, high resolution. Main subject comfortably centered with safe space around head and hands for a rounded card crop. A beautifully restored-looking vintage family portrait of an original elderly Indian couple, gentle smiles and rich natural skin detail, woman in elegant cream sari and man in simple traditional kurta, nostalgic softly lit veranda, subtle warm film character, clean undamaged color photograph. Original fictional people, realistic expressive eyes, believable hands and anatomy, natural skin and fabric texture, polished professional photography rather than illustration. Match the feel of high-quality mobile portrait-template catalogs. No UI, no borders, no collage, no split panels, no logos, no watermarks, no typography. This is a still photograph."
+    },
+    {
+      "id": "p7",
+      "category": "image/prom",
+      "title": "An evening to remember",
+      "prompt": "Create one vertical 2:3 professional editorial photograph for a formal evening portrait template. An original fictional adult woman, age 30, wearing a fully opaque lavender floor-length formal gown with long sleeves and a high neckline, standing in a softly lit garden terrace at dusk. Modest elegant formalwear, relaxed upright pose, hands gently holding a small clutch, warm chandelier bokeh, natural skin texture, high-quality realistic photography. Full-length framing with space above head and below shoes. No lettering, logo, watermark, interface, collage or borders."
+    },
+    {
+      "id": "p8",
+      "category": "image/birthday-photo",
+      "title": "Birthday wishes",
+      "prompt": "Use case: photorealistic-natural. Create ONE finished photographic image for a premium photo/video template catalog. Vertical portrait 2:3 composition, edge-to-edge image, high resolution. Main subject comfortably centered with safe space around head and hands for a rounded card crop. An original adult Indian woman celebrating her birthday in an elegant blush pink dress, seated beside a small tasteful birthday cake with lit candles, blush balloons and warm cream studio background, joyful natural smile, fashion editorial lighting, no text or numerals. Original fictional people, realistic expressive eyes, believable hands and anatomy, natural skin and fabric texture, polished professional photography rather than illustration. Match the feel of high-quality mobile portrait-template catalogs. No UI, no borders, no collage, no split panels, no logos, no watermarks, no typography. This is a still photograph."
+    },
+    {
+      "id": "p9",
+      "category": "image/couple-photo",
+      "title": "Golden together",
+      "prompt": "Use case: photorealistic-natural. Create ONE finished photographic image for a premium photo/video template catalog. Vertical portrait 2:3 composition, edge-to-edge image, high resolution. Main subject comfortably centered with safe space around head and hands for a rounded card crop. An original adult Indian couple sharing a quiet affectionate smile in a garden at golden hour, woman in flowing blue dress and man in an ivory linen shirt, close portrait with softly blurred greenery and warm sun rim light. Original fictional people, realistic expressive eyes, believable hands and anatomy, natural skin and fabric texture, polished professional photography rather than illustration. Match the feel of high-quality mobile portrait-template catalogs. No UI, no borders, no collage, no split panels, no logos, no watermarks, no typography. This is a still photograph."
+    },
+    {
+      "id": "p10",
+      "category": "image/profile-linkedin",
+      "title": "First impression",
+      "prompt": "Use case: photorealistic-natural. Create ONE finished photographic image for a premium photo/video template catalog. Vertical portrait 2:3 composition, edge-to-edge image, high resolution. Main subject comfortably centered with safe space around head and hands for a rounded card crop. A polished professional headshot of an original adult Indian man with neatly groomed hair and light stubble, charcoal tailored blazer and crisp white shirt, neutral light gray studio backdrop, approachable confident expression, realistic business portrait. Original fictional people, realistic expressive eyes, believable hands and anatomy, natural skin and fabric texture, polished professional photography rather than illustration. Match the feel of high-quality mobile portrait-template catalogs. No UI, no borders, no collage, no split panels, no logos, no watermarks, no typography. This is a still photograph."
+    },
+    {
+      "id": "v0",
+      "category": "video/ai-dance-video",
+      "title": "Golden groove",
+      "prompt": "Use case: photorealistic-natural. Create ONE finished photographic image for a premium photo/video template catalog. Vertical portrait 2:3 composition, edge-to-edge image, high resolution. Main subject comfortably centered with safe space around head and hands for a rounded card crop. An original adult woman in a light blue knit top and fitted black trousers holding a graceful relaxed dance pose on an autumn park path, full body with both feet visible, golden leaves and flattering natural light, vibrant realistic lifestyle photograph. Original fictional people, realistic expressive eyes, believable hands and anatomy, natural skin and fabric texture, polished professional photography rather than illustration. Match the feel of high-quality mobile portrait-template catalogs. No UI, no borders, no collage, no split panels, no logos, no watermarks, no typography. This is a still photograph."
+    },
+    {
+      "id": "v1",
+      "category": "video/ai-dance-video",
+      "title": "City moves",
+      "prompt": "Use case: photorealistic-natural. Create ONE finished photographic image for a premium photo/video template catalog. Vertical portrait 2:3 composition, edge-to-edge image, high resolution. Main subject comfortably centered with safe space around head and hands for a rounded card crop. An original adult athletic man in a burgundy plain T-shirt, black trousers and white sneakers, full-body natural urban dance pose outside a modern glass building, both feet visible, confident easy smile, crisp cinematic daylight. Original fictional people, realistic expressive eyes, believable hands and anatomy, natural skin and fabric texture, polished professional photography rather than illustration. Match the feel of high-quality mobile portrait-template catalogs. No UI, no borders, no collage, no split panels, no logos, no watermarks, no typography. This is a still photograph."
+    },
+    {
+      "id": "v2",
+      "category": "video/ai-dance-video",
+      "title": "Studio rhythm",
+      "prompt": "Use case: photorealistic-natural. Create ONE finished photographic image for a premium photo/video template catalog. Vertical portrait 2:3 composition, edge-to-edge image, high resolution. Main subject comfortably centered with safe space around head and hands for a rounded card crop. An original adult Indian woman wearing tasteful cream streetwear and white sneakers in a graceful full-body dance pose, softly lit contemporary dance studio with warm wooden floor and charcoal background, both feet visible, natural anatomy. Original fictional people, realistic expressive eyes, believable hands and anatomy, natural skin and fabric texture, polished professional photography rather than illustration. Match the feel of high-quality mobile portrait-template catalogs. No UI, no borders, no collage, no split panels, no logos, no watermarks, no typography. This is a still photograph."
+    },
+    {
+      "id": "v3",
+      "category": "video/ai-dance-video",
+      "title": "Together in motion",
+      "prompt": "Use case: photorealistic-natural. Create ONE finished photographic image for a premium photo/video template catalog. Vertical portrait 2:3 composition, edge-to-edge image, high resolution. Main subject comfortably centered with safe space around head and hands for a rounded card crop. An original adult couple sharing a joyful casual synchronized dance pose on a sunlit city promenade, woman in pastel lavender top and jeans, man in light blue shirt and beige chinos, both full bodies and feet visible, relaxed authentic smiles. Original fictional people, realistic expressive eyes, believable hands and anatomy, natural skin and fabric texture, polished professional photography rather than illustration. Match the feel of high-quality mobile portrait-template catalogs. No UI, no borders, no collage, no split panels, no logos, no watermarks, no typography. This is a still photograph."
+    },
+    {
+      "id": "v4",
+      "category": "video/living-memories",
+      "title": "A moment, alive",
+      "prompt": "Use case: photorealistic-natural. Create ONE finished photographic image for a premium photo/video template catalog. Vertical portrait 2:3 composition, edge-to-edge image, high resolution. Main subject comfortably centered with safe space around head and hands for a rounded card crop. An original Indian grandmother in a cream sari with soft silver hair sitting in a lush home garden, hands gently joined in greeting, warm genuine smile, dappled sunlight, intimate natural documentary portrait with emotional detail. Original fictional people, realistic expressive eyes, believable hands and anatomy, natural skin and fabric texture, polished professional photography rather than illustration. Match the feel of high-quality mobile portrait-template catalogs. No UI, no borders, no collage, no split panels, no logos, no watermarks, no typography. This is a still photograph."
+    },
+    {
+      "id": "v5",
+      "category": "video/living-memories",
+      "title": "A familiar smile",
+      "prompt": "Use case: photorealistic-natural. Create ONE finished photographic image for a premium photo/video template catalog. Vertical portrait 2:3 composition, edge-to-edge image, high resolution. Main subject comfortably centered with safe space around head and hands for a rounded card crop. An original elderly Indian woman laughing tenderly while holding her fully clothed little grandchild safely on her lap on a shaded veranda, warm family affection, natural faces, realistic hands, soft green background and nostalgic golden light. Original fictional people, realistic expressive eyes, believable hands and anatomy, natural skin and fabric texture, polished professional photography rather than illustration. Match the feel of high-quality mobile portrait-template catalogs. No UI, no borders, no collage, no split panels, no logos, no watermarks, no typography. This is a still photograph."
+    },
+    {
+      "id": "v6",
+      "category": "video/birthday-video",
+      "title": "Birthday glow",
+      "prompt": "Use case: photorealistic-natural. Create ONE finished photographic image for a premium photo/video template catalog. Vertical portrait 2:3 composition, edge-to-edge image, high resolution. Main subject comfortably centered with safe space around head and hands for a rounded card crop. An original adult woman laughing behind a birthday cake with a few glowing candles at an outdoor party, colorful confetti frozen in the air, softly blurred adult friends in the background, natural celebratory energy, realistic cinematic warm light, no lettering. Original fictional people, realistic expressive eyes, believable hands and anatomy, natural skin and fabric texture, polished professional photography rather than illustration. Match the feel of high-quality mobile portrait-template catalogs. No UI, no borders, no collage, no split panels, no logos, no watermarks, no typography. This is a still photograph."
+    },
+    {
+      "id": "v7",
+      "category": "video/couple-video",
+      "title": "Just us",
+      "prompt": "Use case: photorealistic-natural. Create ONE finished photographic image for a premium photo/video template catalog. Vertical portrait 2:3 composition, edge-to-edge image, high resolution. Main subject comfortably centered with safe space around head and hands for a rounded card crop. An original adult Indian couple about to share a gentle embrace beside a lake at sunset, man in dark navy jacket and woman in teal traditional dress, natural smiling eye contact, warm backlight, tasteful romantic cinematic photograph. Original fictional people, realistic expressive eyes, believable hands and anatomy, natural skin and fabric texture, polished professional photography rather than illustration. Match the feel of high-quality mobile portrait-template catalogs. No UI, no borders, no collage, no split panels, no logos, no watermarks, no typography. This is a still photograph."
+    },
+    {
+      "id": "v8",
+      "category": "video/travel",
+      "title": "City escape",
+      "prompt": "Use case: photorealistic-natural. Create ONE finished photographic image for a premium photo/video template catalog. Vertical portrait 2:3 composition, edge-to-edge image, high resolution. Main subject comfortably centered with safe space around head and hands for a rounded card crop. An original adult female traveler in a pale blue summer dress holding fresh tulips on a picturesque European flower-market street, warm morning sunlight, cobbled lane and pastel shopfronts with no readable signs, stylish natural travel photograph, full-length portrait. Original fictional people, realistic expressive eyes, believable hands and anatomy, natural skin and fabric texture, polished professional photography rather than illustration. Match the feel of high-quality mobile portrait-template catalogs. No UI, no borders, no collage, no split panels, no logos, no watermarks, no typography. This is a still photograph."
+    },
+    {
+      "id": "v9",
+      "category": "video/lifestyle",
+      "title": "Golden afternoon",
+      "prompt": "Use case: photorealistic-natural. Create ONE finished photographic image for a premium photo/video template catalog. Vertical portrait 2:3 composition, edge-to-edge image, high resolution. Main subject comfortably centered with safe space around head and hands for a rounded card crop. An original adult Indian woman in a breezy white summer dress and woven straw hat enjoying a sunflower field at golden hour, joyful candid expression, natural flowing fabric, luminous warm editorial travel photography. Original fictional people, realistic expressive eyes, believable hands and anatomy, natural skin and fabric texture, polished professional photography rather than illustration. Match the feel of high-quality mobile portrait-template catalogs. No UI, no borders, no collage, no split panels, no logos, no watermarks, no typography. This is a still photograph."
+    },
+    {
+      "id": "v10",
+      "category": "video/wedding",
+      "title": "Forever begins",
+      "prompt": "Use case: photorealistic-natural. Create ONE finished photographic image for a premium photo/video template catalog. Vertical portrait 2:3 composition, edge-to-edge image, high resolution. Main subject comfortably centered with safe space around head and hands for a rounded card crop. An original adult Indian bride in a refined red and gold wedding sari and groom in an ivory sherwani sharing a quiet affectionate look beneath soft white floral decorations, elegant realistic wedding photography, delicate natural skin texture and warm light. Original fictional people, realistic expressive eyes, believable hands and anatomy, natural skin and fabric texture, polished professional photography rather than illustration. Match the feel of high-quality mobile portrait-template catalogs. No UI, no borders, no collage, no split panels, no logos, no watermarks, no typography. This is a still photograph."
+    },
+    {
+      "id": "v11",
+      "category": "video/animal",
+      "title": "Playful companion",
+      "prompt": "Use case: photorealistic-natural. Create ONE finished photographic image for a premium photo/video template catalog. Vertical portrait 2:3 composition, edge-to-edge image, high resolution. Main subject comfortably centered with safe space around head and hands for a rounded card crop. An adorable golden retriever puppy running gently toward the camera in a sunlit meadow, ears slightly lifted, expressive bright eyes, full puppy body and paws visible, soft flowers and natural green bokeh, realistic premium pet photography. Original fictional people, realistic expressive eyes, believable hands and anatomy, natural skin and fabric texture, polished professional photography rather than illustration. Match the feel of high-quality mobile portrait-template catalogs. No UI, no borders, no collage, no split panels, no logos, no watermarks, no typography. This is a still photograph."
+    },
+    {
+      "id": "s0",
+      "category": "slideshow/trending",
+      "title": "Sunlit stories",
+      "prompt": "Use case: photorealistic-natural. Create ONE finished photographic image for a premium photo/video template catalog. Vertical portrait 2:3 composition, edge-to-edge image, high resolution. Main subject comfortably centered with safe space around head and hands for a rounded card crop. An original adult Indian woman in a flowing white dress and woven straw hat walking through a field of sunflowers, joyful candid smile, golden sunshine, bright elegant lifestyle photograph, full-length body in portrait framing. Original fictional people, realistic expressive eyes, believable hands and anatomy, natural skin and fabric texture, polished professional photography rather than illustration. Match the feel of high-quality mobile portrait-template catalogs. No UI, no borders, no collage, no split panels, no logos, no watermarks, no typography. This is a still photograph."
+    },
+    {
+      "id": "s1",
+      "category": "slideshow/trending",
+      "title": "City diary",
+      "prompt": "Use case: photorealistic-natural. Create ONE finished photographic image for a premium photo/video template catalog. Vertical portrait 2:3 composition, edge-to-edge image, high resolution. Main subject comfortably centered with safe space around head and hands for a rounded card crop. An original adult Indian woman wearing a tailored beige suit and sunglasses walking on a rooftop terrace overlooking an elegant city skyline at sunset, refined travel fashion editorial, handbag, natural full-body pose, premium warm photography. Original fictional people, realistic expressive eyes, believable hands and anatomy, natural skin and fabric texture, polished professional photography rather than illustration. Match the feel of high-quality mobile portrait-template catalogs. No UI, no borders, no collage, no split panels, no logos, no watermarks, no typography. This is a still photograph."
+    },
+    {
+      "id": "s2",
+      "category": "slideshow/trending",
+      "title": "Little moments",
+      "prompt": "Use case: photorealistic-natural. Create ONE finished photographic image for a premium photo/video template catalog. Vertical portrait 2:3 composition, edge-to-edge image, high resolution. Main subject comfortably centered with safe space around head and hands for a rounded card crop. An original adult woman in a lavender summer dress standing among lush garden flowers with a wicker handbag, candid warm smile, late-afternoon sunlight, refined lifestyle editorial photography, medium full-length composition. Original fictional people, realistic expressive eyes, believable hands and anatomy, natural skin and fabric texture, polished professional photography rather than illustration. Match the feel of high-quality mobile portrait-template catalogs. No UI, no borders, no collage, no split panels, no logos, no watermarks, no typography. This is a still photograph."
+    },
+    {
+      "id": "s3",
+      "category": "slideshow/trending",
+      "title": "Our story",
+      "prompt": "Use case: photorealistic-natural. Create ONE finished photographic image for a premium photo/video template catalog. Vertical portrait 2:3 composition, edge-to-edge image, high resolution. Main subject comfortably centered with safe space around head and hands for a rounded card crop. An original adult couple strolling hand in hand through a lavender field, man in ivory linen and woman in a pale lavender dress, mountains far behind, warm sunset, romantic realistic full-length photograph. Original fictional people, realistic expressive eyes, believable hands and anatomy, natural skin and fabric texture, polished professional photography rather than illustration. Match the feel of high-quality mobile portrait-template catalogs. No UI, no borders, no collage, no split panels, no logos, no watermarks, no typography. This is a still photograph."
+    },
+    {
+      "id": "s4",
+      "category": "slideshow/birthday",
+      "title": "Make a wish",
+      "prompt": "Create ONE photorealistic birthday celebration portrait for a mobile template catalog, vertical 2:3, edge-to-edge. An adult Indian woman aged 35 wearing a fully opaque burgundy long-sleeve high-neck blouse and cream trousers sits at a decorated dining table, smiling at a small white birthday cake with glowing candles. Her shoulders, chest, torso and legs are fully covered. Warm restaurant fairy lights and a few gold balloons softly blurred behind her. Medium shot including her face, arms, and the entire birthday cake. Natural skin texture, realistic hands, tasteful candid family-event photography, joyful expression. Centered composition with space around the subject for a rounded card crop. Original fictional person. No text, numbers, logos, watermarks, UI, collage or borders."
+    },
+    {
+      "id": "s5",
+      "category": "slideshow/couple",
+      "title": "You and me",
+      "prompt": "Use case: photorealistic-natural. Create ONE finished photographic image for a premium photo/video template catalog. Vertical portrait 2:3 composition, edge-to-edge image, high resolution. Main subject comfortably centered with safe space around head and hands for a rounded card crop. An original adult couple sitting close together on a sandy beach at sunset, matching relaxed cream linen outfits, gentle natural laughter and affectionate glance, ocean softly blurred, polished authentic romantic portrait. Original fictional people, realistic expressive eyes, believable hands and anatomy, natural skin and fabric texture, polished professional photography rather than illustration. Match the feel of high-quality mobile portrait-template catalogs. No UI, no borders, no collage, no split panels, no logos, no watermarks, no typography. This is a still photograph."
+    },
+    {
+      "id": "s6",
+      "category": "slideshow/family",
+      "title": "Together always",
+      "prompt": "Use case: photorealistic-natural. Create ONE finished photographic image for a premium photo/video template catalog. Vertical portrait 2:3 composition, edge-to-edge image, high resolution. Main subject comfortably centered with safe space around head and hands for a rounded card crop. An original Indian family of four: two adult parents and two fully clothed young children sharing a joyful picnic in a green park, natural relaxed interaction, tasteful coordinated pastel casual clothes, warm sunlight, premium realistic family photography. Original fictional people, realistic expressive eyes, believable hands and anatomy, natural skin and fabric texture, polished professional photography rather than illustration. Match the feel of high-quality mobile portrait-template catalogs. No UI, no borders, no collage, no split panels, no logos, no watermarks, no typography. This is a still photograph."
+    }
+  ]
+}

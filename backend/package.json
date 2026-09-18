@@ -1,0 +1,37 @@
+{
+  "name": "ai-creator-backend",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "billing:setup": "node --env-file-if-exists=.env server/setup-billing.mjs",
+    "templates:install": "node --env-file-if-exists=.env server/install-template-artwork.mjs",
+    "fal:setup": "node --env-file-if-exists=.env server/setup-fal.mjs",
+    "fal:smoke": "node --env-file-if-exists=.env server/smoke-fal.mjs",
+    "start": "node --env-file-if-exists=.env server/start.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "setup": "node --env-file-if-exists=.env server/setup.mjs",
+    "backup": "node --env-file-if-exists=.env server/backup.mjs",
+    "cleanup": "node --env-file-if-exists=.env server/cleanup.mjs",
+    "sync:texts": "node --env-file-if-exists=.env server/sync-texts.mjs",
+    "storage:check": "node --env-file-if-exists=.env server/check-storage.mjs",
+    "storage:migrate": "node --env-file-if-exists=.env server/migrate-storage.mjs",
+    "database:check": "node --env-file-if-exists=.env server/check-database.mjs",
+    "database:migrate": "node --env-file-if-exists=.env server/migrate-database.mjs",
+    "database:setup": "node --env-file-if-exists=.env server/setup-database.mjs"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1133.0",
+    "@aws-sdk/s3-request-presigner": "^3.1133.0",
+    "@fastify/cookie": "^11.1.2",
+    "@fastify/multipart": "^10.1.1",
+    "@fastify/rate-limit": "^11.2.0",
+    "@fastify/static": "^10.1.3",
+    "fastify": "^5.12.4",
+    "google-auth-library": "^11.1.0",
+    "pg": "^8.23.0",
+    "zod": "^4.6.5"
+  }
+}

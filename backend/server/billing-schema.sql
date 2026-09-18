@@ -1,0 +1,13 @@
+CREATE TABLE IF NOT EXISTS billing_accounts(
+  account_id TEXT PRIMARY KEY, user_id TEXT UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE);
+CREATE TABLE IF NOT EXISTS play_purchases(
+  token_hash TEXT PRIMARY KEY, token_cipher TEXT NOT NULL,
+  user_id TEXT REFERENCES users(id) ON DELETE SET NULL, account_id TEXT NOT NULL,
+  product_id TEXT NOT NULL, kind TEXT NOT NULL, status TEXT NOT NULL,
+  unit_coins INTEGER NOT NULL DEFAULT 0, quantity INTEGER NOT NULL DEFAULT 1,
+  granted INTEGER NOT NULL DEFAULT 0, revoked INTEGER NOT NULL DEFAULT 0,
+  expires_at BIGINT NOT NULL DEFAULT 0, verified_at BIGINT NOT NULL,
+  finalized INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS play_purchases_user ON play_purchases(user_id,kind);
+CREATE TABLE IF NOT EXISTS billing_debts(
+  user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE, amount INTEGER NOT NULL DEFAULT 0 CHECK(amount>=0));

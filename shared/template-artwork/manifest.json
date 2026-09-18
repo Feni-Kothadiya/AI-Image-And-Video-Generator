@@ -1,0 +1,212 @@
+[
+  {
+    "id": "p0",
+    "category": "image/studio",
+    "title": "Soft light",
+    "file": "image/studio/p0.png",
+    "name": "template-p0.png"
+  },
+  {
+    "id": "p1",
+    "category": "image/studio",
+    "title": "Neon nights",
+    "file": "image/studio/p1.png",
+    "name": "template-p1.png"
+  },
+  {
+    "id": "p2",
+    "category": "image/studio",
+    "title": "Golden muse",
+    "file": "image/studio/p2.png",
+    "name": "template-p2.png"
+  },
+  {
+    "id": "p3",
+    "category": "image/studio",
+    "title": "Two of a kind",
+    "file": "image/studio/p3.png",
+    "name": "template-p3.png"
+  },
+  {
+    "id": "p4",
+    "category": "image/prank",
+    "title": "Tiny world",
+    "file": "image/prank/p4.png",
+    "name": "template-p4.png"
+  },
+  {
+    "id": "p5",
+    "category": "image/graduation-season",
+    "title": "Your next chapter",
+    "file": "image/graduation-season/p5.png",
+    "name": "template-p5.png"
+  },
+  {
+    "id": "p6",
+    "category": "image/moments-reborn",
+    "title": "Memories restored",
+    "file": "image/moments-reborn/p6.png",
+    "name": "template-p6.png"
+  },
+  {
+    "id": "p7",
+    "category": "image/prom",
+    "title": "An evening to remember",
+    "file": "image/prom/p7.png",
+    "name": "template-p7.png"
+  },
+  {
+    "id": "p8",
+    "category": "image/birthday-photo",
+    "title": "Birthday wishes",
+    "file": "image/birthday-photo/p8.png",
+    "name": "template-p8.png"
+  },
+  {
+    "id": "p9",
+    "category": "image/couple-photo",
+    "title": "Golden together",
+    "file": "image/couple-photo/p9.png",
+    "name": "template-p9.png"
+  },
+  {
+    "id": "p10",
+    "category": "image/profile-linkedin",
+    "title": "First impression",
+    "file": "image/profile-linkedin/p10.png",
+    "name": "template-p10.png"
+  },
+  {
+    "id": "v0",
+    "category": "video/ai-dance-video",
+    "title": "Golden groove",
+    "file": "video/ai-dance-video/v0.png",
+    "name": "template-v0.png"
+  },
+  {
+    "id": "v1",
+    "category": "video/ai-dance-video",
+    "title": "City moves",
+    "file": "video/ai-dance-video/v1.png",
+    "name": "template-v1.png"
+  },
+  {
+    "id": "v2",
+    "category": "video/ai-dance-video",
+    "title": "Studio rhythm",
+    "file": "video/ai-dance-video/v2.png",
+    "name": "template-v2.png"
+  },
+  {
+    "id": "v3",
+    "category": "video/ai-dance-video",
+    "title": "Together in motion",
+    "file": "video/ai-dance-video/v3.png",
+    "name": "template-v3.png"
+  },
+  {
+    "id": "v4",
+    "category": "video/living-memories",
+    "title": "A moment, alive",
+    "file": "video/living-memories/v4.png",
+    "name": "template-v4.png"
+  },
+  {
+    "id": "v5",
+    "category": "video/living-memories",
+    "title": "A familiar smile",
+    "file": "video/living-memories/v5.png",
+    "name": "template-v5.png"
+  },
+  {
+    "id": "v6",
+    "category": "video/birthday-video",
+    "title": "Birthday glow",
+    "file": "video/birthday-video/v6.png",
+    "name": "template-v6.png"
+  },
+  {
+    "id": "v7",
+    "category": "video/couple-video",
+    "title": "Just us",
+    "file": "video/couple-video/v7.png",
+    "name": "template-v7.png"
+  },
+  {
+    "id": "v8",
+    "category": "video/travel",
+    "title": "City escape",
+    "file": "video/travel/v8.png",
+    "name": "template-v8.png"
+  },
+  {
+    "id": "v9",
+    "category": "video/lifestyle",
+    "title": "Golden afternoon",
+    "file": "video/lifestyle/v9.png",
+    "name": "template-v9.png"
+  },
+  {
+    "id": "v10",
+    "category": "video/wedding",
+    "title": "Forever begins",
+    "file": "video/wedding/v10.png",
+    "name": "template-v10.png"
+  },
+  {
+    "id": "v11",
+    "category": "video/animal",
+    "title": "Playful companion",
+    "file": "video/animal/v11.png",
+    "name": "template-v11.png"
+  },
+  {
+    "id": "s0",
+    "category": "slideshow/trending",
+    "title": "Sunlit stories",
+    "file": "slideshow/trending/s0.png",
+    "name": "template-s0.png"
+  },
+  {
+    "id": "s1",
+    "category": "slideshow/trending",
+    "title": "City diary",
+    "file": "slideshow/trending/s1.png",
+    "name": "template-s1.png"
+  },
+  {
+    "id": "s2",
+    "category": "slideshow/trending",
+    "title": "Little moments",
+    "file": "slideshow/trending/s2.png",
+    "name": "template-s2.png"
+  },
+  {
+    "id": "s3",
+    "category": "slideshow/trending",
+    "title": "Our story",
+    "file": "slideshow/trending/s3.png",
+    "name": "template-s3.png"
+  },
+  {
+    "id": "s4",
+    "category": "slideshow/birthday",
+    "title": "Make a wish",
+    "file": "slideshow/birthday/s4.png",
+    "name": "template-s4.png"
+  },
+  {
+    "id": "s5",
+    "category": "slideshow/couple",
+    "title": "You and me",
+    "file": "slideshow/couple/s5.png",
+    "name": "template-s5.png"
+  },
+  {
+    "id": "s6",
+    "category": "slideshow/family",
+    "title": "Together always",
+    "file": "slideshow/family/s6.png",
+    "name": "template-s6.png"
+  }
+]

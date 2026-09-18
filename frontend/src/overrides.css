@@ -1,0 +1,8 @@
+.global-error {
+  position: fixed;
+  top: 18px;
+  right: 24px;
+  z-index: 250;
+  width: min(580px, calc(100vw - 36px));
+  box-shadow: 0 8px 30px #27324b25;
+}

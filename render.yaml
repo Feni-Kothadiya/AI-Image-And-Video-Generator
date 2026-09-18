@@ -1,0 +1,43 @@
+# Deploy from the workspace root so backend, frontend, and shared stay together.
+services:
+  - type: web
+    name: ai-creator-backend
+    runtime: node
+    plan: free
+    region: virginia
+    numInstances: 1
+    autoDeployTrigger: "off"
+    buildCommand: npm --prefix backend ci && npm --prefix frontend ci --include=dev && npm --prefix frontend run build
+    startCommand: node backend/server/render-start.mjs
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 22.22.2
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: DATA_DIR
+        value: /tmp/ai-creator-data
+      - key: TRUST_PROXY
+        value: "1"
+      - key: BACKGROUND_WORKERS_ENABLED
+        value: "0"
+      - key: PLAY_BILLING_ENABLED
+        value: "0"
+      - key: MEDIA_STORAGE
+        value: r2
+      - key: R2_REGION
+        value: auto
+      - key: DATABASE_URL
+        sync: false
+      - key: MASTER_KEY_BASE64
+        sync: false
+      - key: R2_ENDPOINT
+        sync: false
+      - key: R2_BUCKET
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false

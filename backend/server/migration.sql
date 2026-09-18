@@ -1,0 +1,42 @@
+PRAGMA journal_mode=WAL;
+PRAGMA foreign_keys=ON;
+PRAGMA busy_timeout=5000;
+CREATE TABLE IF NOT EXISTS schema_migrations(version INTEGER PRIMARY KEY, applied_at TEXT NOT NULL);
+INSERT OR IGNORE INTO schema_migrations VALUES(1, datetime('now'));
+CREATE TABLE IF NOT EXISTS users(
+  id TEXT PRIMARY KEY, email TEXT UNIQUE, password TEXT, role TEXT NOT NULL DEFAULT 'user',
+  status TEXT NOT NULL DEFAULT 'active', coins INTEGER NOT NULL DEFAULT 0 CHECK(coins>=0),
+  last_claim TEXT, streak INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS sessions(
+  hash TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  csrf TEXT, expires_at INTEGER NOT NULL);
+CREATE INDEX IF NOT EXISTS sessions_user ON sessions(user_id);
+CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY, value TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS revisions(
+  id INTEGER PRIMARY KEY AUTOINCREMENT, content TEXT NOT NULL, note TEXT NOT NULL,
+  actor TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS ledger(
+  id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  amount INTEGER NOT NULL, balance INTEGER NOT NULL, reason TEXT NOT NULL,
+  reference TEXT NOT NULL, created_at TEXT NOT NULL, UNIQUE(user_id,reference));
+CREATE INDEX IF NOT EXISTS ledger_user ON ledger(user_id,created_at DESC);
+CREATE TABLE IF NOT EXISTS uploads(
+  id TEXT PRIMARY KEY, user_id TEXT REFERENCES users(id) ON DELETE CASCADE, filename TEXT NOT NULL,
+  mime TEXT NOT NULL, bytes INTEGER NOT NULL, public INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS jobs(
+  id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  idempotency_key TEXT NOT NULL, request TEXT NOT NULL, request_hash TEXT NOT NULL,
+  status TEXT NOT NULL, cost INTEGER NOT NULL, reward INTEGER NOT NULL DEFAULT 0,
+  provider_id TEXT, provider_config TEXT NOT NULL, result_url TEXT, error TEXT,
+  attempts INTEGER NOT NULL DEFAULT 0, next_run INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL, updated_at TEXT NOT NULL, UNIQUE(user_id,idempotency_key));
+CREATE INDEX IF NOT EXISTS jobs_queue ON jobs(status,next_run);
+CREATE TABLE IF NOT EXISTS reports(
+  id TEXT PRIMARY KEY, user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+  template_id TEXT, reason TEXT NOT NULL, detail TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'open', created_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS audit(
+  id INTEGER PRIMARY KEY AUTOINCREMENT, actor TEXT NOT NULL, action TEXT NOT NULL,
+  target TEXT NOT NULL, detail TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS purchases(
+  id TEXT PRIMARY KEY, user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+  product_id TEXT NOT NULL, transaction_id TEXT UNIQUE, status TEXT NOT NULL, created_at TEXT NOT NULL);
