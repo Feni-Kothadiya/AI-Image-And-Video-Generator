@@ -20,6 +20,7 @@ export async function premiumEntitlement(db, userId) {
     active,
     adFree: active,
     premiumTemplates: active,
+    unlimitedGeneration: active,
     expiresAt: active ? new Date(expiresAt).toISOString() : null,
   };
 }
@@ -53,7 +54,6 @@ export function createBilling({ db, play, key }) {
       enabled: play.enabled,
       packageName: play.packageName,
       accountId,
-      requiresAccount: !user.email,
       products: products
         .filter((p) => p.enabled && (p.kind !== "coins" || p.coins > 0))
         .map(({ id, productId, kind, coins, basePlanId, period, label }) => ({
@@ -77,7 +77,7 @@ export function createBilling({ db, play, key }) {
       .prepare("SELECT * FROM play_purchases WHERE token_hash=?")
       .get(tokenHash);
     if (existing && user && existing.user_id !== user.id)
-      fail(403, "Sign in to the original account used for this purchase.");
+      fail(403, "This purchase belongs to another app installation.");
     if (existing?.status === "REPLACED")
       return {
         verified: true,
@@ -126,12 +126,12 @@ export function createBilling({ db, play, key }) {
         .get(account.user_id);
     }
     if (
-      !user?.email ||
+      !user ||
       user.status !== "active" ||
       billingAccountId(user.id) !== accountId ||
       (existing && existing.user_id !== user.id)
     )
-      fail(403, "Sign in to the original account used for this purchase.");
+      fail(403, "This purchase belongs to another app installation.");
     const state =
       kind === "coins"
         ? receipt.purchaseStateContext?.purchaseState

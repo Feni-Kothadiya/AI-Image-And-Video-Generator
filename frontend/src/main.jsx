@@ -290,7 +290,7 @@ function Login({ onLogin }) {
           <img src="/seed-assets/flowers.png" />
           <img src="/seed-assets/city.png" />
         </div>
-        <small>AI Image And Video Generator · Android</small>
+        <small>Genora AI Image &amp; Video Editor · Android</small>
       </div>
       <div className="login-form">
         <form onSubmit={submit}>
@@ -617,7 +617,7 @@ function Dashboard() {
           )}
           {screen}
           <footer className="main-footer">
-            <span>AI Image And Video Generator</span>
+            <span>Genora AI Image &amp; Video Editor</span>
             <span>
               Published version {published?.version || "—"} · Changes go live
               only when published
@@ -950,6 +950,11 @@ function ContentEditor({ content: c, update }) {
                     dance: "AI Dance",
                     slideshow: "Slideshow templates",
                     dailyRewards: "Daily rewards",
+                    ads: "All advertising",
+                    bannerAds: "Bottom banner ads",
+                    appOpenAds: "Launch ads",
+                    interstitialAds: "Back-navigation ads",
+                    rewardedAds: "Rewarded coin ads",
                     maintenance: "Maintenance mode",
                   }[key]
                 }
@@ -2429,7 +2434,7 @@ function Integrations({ revision, run, busy }) {
         {[
           ["AI generation", Plug, data.enabled ? "Configured" : "Awaiting API"],
           ["Google Play billing", Coins, data.billing === "configured" ? "Configured" : "Not configured"],
-          ["Rewarded ads", Eye, "Not configured"],
+          ["Rewarded ads", Eye, data.ads === "enabled" ? "Configured" : "Disabled"],
         ].map(([name, Icon, state]) => (
           <div className="integration-card" key={name}>
             <Icon size={25} />

@@ -133,6 +133,26 @@ test("coin purchase is credited exactly once, including concurrent verification"
     1,
   );
 });
+test("automatic guest wallets can purchase without an email or sign-in", async (t) => {
+  const f = await fixture(t), guest = {
+    id: randomUUID(),
+    email: null,
+    status: "active",
+  };
+  await f.db
+    .prepare("INSERT INTO users(id,email,coins,created_at) VALUES(?,?,100,?)")
+    .run(guest.id, guest.email, now());
+  const catalog = await f.billing.catalog(guest);
+  assert.equal("requiresAccount" in catalog, false);
+  f.coin("guest-purchase", {
+    obfuscatedExternalAccountId: billingAccountId(guest.id),
+  });
+  await f.verify("guest-purchase", "coins_50", guest);
+  assert.equal(
+    (await f.db.prepare("SELECT coins FROM users WHERE id=?").get(guest.id)).coins,
+    150,
+  );
+});
 test("pending and forged purchases cannot grant coins; pending later completes", async (t) => {
   const f = await fixture(t);
   f.coin("pending", { purchaseStateContext: { purchaseState: "PENDING" } });
@@ -153,7 +173,7 @@ test("purchase account, product and type cannot be substituted", async (t) => {
   );
   await assert.rejects(
     f.verify("bound", "coins_50", { ...f.user, id: randomUUID() }),
-    /original account/,
+    /another app installation/,
   );
   f.coin("unbound", { obfuscatedExternalAccountId: undefined });
   await assert.rejects(f.verify("unbound"), /missing/);
@@ -255,7 +275,7 @@ test("billing notifications refetch Google state and replay without duplicate cr
   };
   await assert.rejects(f.billing.notification(wrong), /Incorrect app package/);
 });
-test("premium template access is enforced by the backend and still charges generation coins", async (t) => {
+test("premium subscriptions allow unlimited generation without charging coins", async (t) => {
   const f = await fixture(t),
     photo = randomUUID();
   await f.db
@@ -276,8 +296,8 @@ test("premium template access is enforced by the backend and still charges gener
   f.sub("access");
   await f.verify("access", "premium_weekly");
   const job = await createJob(f.db, f.user, randomUUID(), input, () => true);
-  assert.equal(job.cost, 40);
-  assert.equal(await f.balance(), 60);
+  assert.equal(job.cost, 0);
+  assert.equal(await f.balance(), 100);
 });
 test("unconfigured billing and unauthenticated notifications fail closed", async () => {
   const play = createPlayBilling({ env: {} });

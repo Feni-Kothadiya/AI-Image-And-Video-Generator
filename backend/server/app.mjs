@@ -195,7 +195,7 @@ export async function buildApp(options = {}) {
         dance: ready(integration, "dance"),
         slideshow: ready(integration, "slideshow"),
         billing: play.enabled,
-        ads: false,
+        ads: content.features.ads,
       },
       serverDate: new Date().toISOString().slice(0, 10),
     };
@@ -473,11 +473,36 @@ export async function buildApp(options = {}) {
     await billing.notification(body);
     return reply.code(204).send();
   });
-  app.post("/api/rewards/ad", { preHandler: mobile }, async () =>
-    fail(
-      503,
-      "Verified rewarded ads are not configured. No coins were credited.",
-    ),
+  app.post(
+    "/api/rewards/ad",
+    { preHandler: mobile, config: { rateLimit: { max: 12, timeWindow: "1 day" } } },
+    async (req) => {
+      const input = parse(
+        z.object({ claimId: z.string().uuid(), offer: z.enum(["single", "double"]) }).strict(),
+        req.body,
+      );
+      const published = await getSetting(db, "published");
+      if (!published.content.features.ads || !published.content.features.rewardedAds)
+        fail(503, "Rewarded ads are currently disabled.");
+      const today = new Date().toISOString().slice(0, 10);
+      const reason = input.offer === "double" ? "Rewarded ads (2)" : "Rewarded ad";
+      const dailyLimit = input.offer === "double" ? 2 : 8;
+      const amount = input.offer === "double"
+        ? published.content.rewards.twoAds
+        : published.content.rewards.ad;
+      const reference = `rewarded:${input.offer}:${input.claimId}`;
+      const record = await transaction(db, async () => {
+        const existing = await db.prepare("SELECT * FROM ledger WHERE user_id=? AND reference=?").get(req.user.id, reference);
+        if (existing) return existing;
+        const used = await db.prepare("SELECT count(*) AS n FROM ledger WHERE user_id=? AND reason=? AND created_at LIKE ?").get(req.user.id, reason, today + "%");
+        if (used.n >= dailyLimit) fail(429, "Today’s rewarded-ad limit has been reached.");
+        return credit(db, req.user.id, amount, reason, reference);
+      });
+      return {
+        amount: record.amount,
+        user: publicUser(await db.prepare("SELECT * FROM users WHERE id=?").get(req.user.id)),
+      };
+    },
   );
   // Authentication runs before multipart parsing or persistence.
   async function saveUpload(req, isPublic) {
@@ -1090,7 +1115,7 @@ export async function buildApp(options = {}) {
       allowedHosts,
       services: (await configEnvelope()).services,
       billing: play.enabled ? "configured" : "not_configured",
-      ads: "not_configured",
+      ads: (await getSetting(db, "published")).content.features.ads ? "enabled" : "disabled",
     };
   });
   app.put("/api/admin/integration", { preHandler: admin }, async (req) => {

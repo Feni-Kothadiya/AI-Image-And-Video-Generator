@@ -25,6 +25,8 @@ services:
         value: "0"
       - key: PLAY_BILLING_ENABLED
         value: "0"
+      - key: PLAY_PACKAGE_NAME
+        value: ai.video.generator.image.generator
       - key: MEDIA_STORAGE
         value: r2
       - key: R2_REGION

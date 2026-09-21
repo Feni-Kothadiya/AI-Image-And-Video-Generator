@@ -34,8 +34,9 @@ export async function createJob(db, user, key, input, integrationReady) {
       : null;
     if (request.templateId && (!template || template.kind !== request.mode))
       fail(400, "Template is no longer available for this tool.");
-    if (template?.premium && !(await premiumEntitlement(db, user.id)).active)
-      fail(403, "A premium subscription is required for this template. Generation also requires coins.");
+    const premium = await premiumEntitlement(db, user.id);
+    if (template?.premium && !premium.active)
+      fail(403, "A premium subscription is required for this template.");
     if (await billingDebt(db, user.id)) fail(409, "A refunded coin balance must be settled before generating. Contact support or top up coins.");
     if (request.mode !== "slideshow" && !request.prompt)
       fail(400, "Describe what you want to create.");
@@ -86,7 +87,9 @@ export async function createJob(db, user, key, input, integrationReady) {
       );
     const id = randomUUID(),
       time = now(),
-      cost = request.mode === "slideshow" ? 0 : config.costs[request.mode];
+      cost = request.mode === "slideshow" || premium.unlimitedGeneration
+        ? 0
+        : config.costs[request.mode];
     const reward =
       config.rewards[request.mode === "dance" ? "video" : request.mode];
     const payload = {

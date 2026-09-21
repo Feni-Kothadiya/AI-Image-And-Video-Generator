@@ -3,14 +3,13 @@
 Android uses Google Play Billing through `expo-iap`; the backend verifies purchases
 with the Google Play Developer API. No RevenueCat account is needed.
 
-Premium grants **premium templates and ad-free use**. Subscriptions grant no coins.
-All AI generation still uses the normal coin prices. Coin packs are separate consumable
-purchases. Users must register/sign in before purchasing so balances and subscriptions
-can be recovered after reinstalling. Restore requires the original app account.
+Premium grants **unlimited AI creation, premium templates, and ad-free use** while a
+weekly or yearly subscription is active. Coin packs remain separate consumable purchases.
+The app creates an automatic installation wallet, so users can purchase without signing in.
 
 ## 1. Create the products in Play Console
 
-Use package `com.aicreatorstudio.imagevideogenerator` for the Play Console app and build.
+Use package `ai.video.generator.image.generator` for the Play Console app and build.
 Complete the Play Console account/payment profile setup and upload a signed Android
 App Bundle to an internal testing track. The native billing module requires a new build;
 an old APK or Expo Go cannot test these purchases.
@@ -54,7 +53,7 @@ rhythm (`v2`), and City diary (`s1`). Other templates remain accessible without 
 
 ```dotenv
 PLAY_BILLING_ENABLED=0
-PLAY_PACKAGE_NAME=com.aicreatorstudio.imagevideogenerator
+PLAY_PACKAGE_NAME=ai.video.generator.image.generator
 GOOGLE_APPLICATION_CREDENTIALS=/absolute/backend/data/google-play-service-account.json
 PLAY_RTDN_AUDIENCE=https://YOUR_BACKEND/api/billing/notifications
 PLAY_RTDN_SERVICE_ACCOUNT=play-push@YOUR_PROJECT.iam.gserviceaccount.com
@@ -93,8 +92,9 @@ Google before applying changes. Configure delivery retries/dead-letter monitorin
    tables, suggested product IDs, and sample premium flags. It backs up published/draft
    content separately and does not call Google Play or an AI provider.
 5. Once setup is complete, set `PLAY_BILLING_ENABLED=1` and restart the backend.
-6. Register/sign in inside the app. Purchase dialogs for correctly configured license
-   testers offer Google test payment methods. Use those test methods; do not use a real card.
+6. Open the app and wait for its automatic wallet to connect. Purchase dialogs for
+   correctly configured license testers offer Google test payment methods. Use those test
+   methods; do not use a real card.
 
 Keep AI generation disabled during purchase testing to avoid spending fal.ai credits.
 Billing verification tests do not need image/video generation.
@@ -105,8 +105,8 @@ Billing verification tests do not need image/video generation.
 - Retry verification/Restore after a network interruption; no duplicate credit.
 - Cancel checkout; verify no coins/premium are granted.
 - Use a pending test payment; verify access remains locked until confirmation.
-- Buy weekly/yearly premium; PRO templates unlock, ad prompts disappear, coins do not increase.
-- Confirm premium image/video jobs still require the configured coin cost.
+- Buy weekly/yearly premium; PRO templates unlock, ad prompts disappear, and AI jobs cost zero coins.
+- Confirm premium image/video jobs leave the wallet balance unchanged.
 - Cancel auto-renewal; retain access through the paid expiry. Test expiry, hold, and recovery.
 - Refund a pack; unspent coins are removed. Spent refunded coins become a balance to settle,
   blocking generation until repaid. Repeated refund notifications do not deduct twice.

@@ -3,7 +3,7 @@ import { fail } from "./schema.mjs";
 
 export function createPlayBilling({ env = process.env } = {}) {
   const packageName =
-    env.PLAY_PACKAGE_NAME || "com.aicreatorstudio.imagevideogenerator";
+    env.PLAY_PACKAGE_NAME || "ai.video.generator.image.generator";
   const enabled =
     env.PLAY_BILLING_ENABLED === "1" && !!(env.GOOGLE_APPLICATION_CREDENTIALS && env.PLAY_RTDN_AUDIENCE && env.PLAY_RTDN_SERVICE_ACCOUNT);
   const auth = new GoogleAuth({

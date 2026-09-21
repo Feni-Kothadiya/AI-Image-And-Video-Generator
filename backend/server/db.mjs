@@ -92,6 +92,15 @@ async function seedDatabase(db) {
         gatewayUrl: "",
         models: { image: "", video: "", dance: "", slideshow: "" },
       });
+    } else {
+      // Keep existing installations compatible when new remote feature switches are added.
+      for (const key of ["published", "draft"]) {
+        const saved = await getSetting(db, key);
+        if (!saved?.content?.features) continue;
+        const features = { ...defaults.features, ...saved.content.features };
+        if (JSON.stringify(features) !== JSON.stringify(saved.content.features))
+          await setSetting(db, key, { ...saved, content: { ...saved.content, features } });
+      }
     }
   });
 }

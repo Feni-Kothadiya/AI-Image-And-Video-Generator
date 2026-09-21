@@ -295,10 +295,10 @@ test("concurrent daily claims credit once and use server reward amounts", async 
     1,
   );
 });
-test("unconfigured generation, billing, and ad claims cannot change coins", async (t) => {
+test("unconfigured generation and billing cannot change coins; rewarded ads use server amounts", async (t) => {
   const { guest } = await fixture(t),
     g = await guest();
-  for (const path of ["/api/jobs", "/api/billing/verify", "/api/rewards/ad"]) {
+  for (const path of ["/api/jobs", "/api/billing/verify"]) {
     const response = await g.call(
       path,
       "POST",
@@ -310,6 +310,15 @@ test("unconfigured generation, billing, and ad claims cannot change coins", asyn
     assert.equal(response.statusCode, 503, response.body);
   }
   assert.equal((await g.call("/api/me")).json().user.coins, 13);
+  const reward = await g.call(
+    "/api/rewards/ad",
+    "POST",
+    { claimId: randomUUID(), offer: "single" },
+    { "Idempotency-Key": randomUUID() },
+  );
+  assert.equal(reward.statusCode, 200, reward.body);
+  assert.equal(reward.json().amount, 5);
+  assert.equal((await g.call("/api/me")).json().user.coins, 18);
 });
 test("job idempotency, insufficient funds, ownership, failure refunds, and duplicate settlement", async (t) => {
   const { guest, db } = await fixture(t, {
@@ -1018,7 +1027,7 @@ test("fal integration sends private R2 URLs, persists queue IDs, stores outputs 
     dance: true,
     slideshow: false,
     billing: false,
-    ads: false,
+    ads: true,
   });
   assert.ok(!config.body.includes("fal-test-key"));
   const settings = await admin("/integration");

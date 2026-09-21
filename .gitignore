@@ -1,13 +1,65 @@
+# Dependencies and package-manager caches
 **/node_modules/
-**/dist/
-backend/data/
-**/.env
-**/.env.*
-!**/.env.example
 .npm-cache/
-.tools/
-**/.expo/
+.yarn/
+.pnpm-store/
+
+# Build output and test reports
+**/dist/
+**/dist-*/
+**/build/
+**/coverage/
 **/artifacts/
 **/test-results/
 **/playwright-report/
+*.apk
+*.aab
+
+# Local databases, uploaded media, logs, and runtime state
+backend/data/
+**/*.db
+**/*.db-*
+**/*.sqlite
+**/*.sqlite3
+**/*.log
+*.pid
+
+# Secrets and local environment overrides
+**/.env
+**/.env.*
+!**/.env.example
+*.jks
+*.keystore
+*.p8
+*.p12
+*.pem
+*.key
+
+# Local tooling and Gradle/Expo caches
+.tools/
+.build-temp/
+.gradle-cache/
+.gradle-user-home/
+**/.gradle/
+**/.expo/
+**/.kotlin/
+**/.cxx/
+
+# The Android app is built separately and is not part of the Render service.
+/ai-image-video-generator/
+
+# Local research captures and unrelated generated deliverables
+/reference-*.png
+/reference-*.xml
+/output/
+
+# Editor and operating-system files
 .DS_Store
+Thumbs.db
+Desktop.ini
+.idea/
+.vscode/
+*.swp
+*.swo
+*.tmp
+*~

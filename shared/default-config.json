@@ -1,6 +1,6 @@
 {
   "branding": {
-    "appName": "AI Image And Video Generator",
+    "appName": "Genora AI Image & Video Editor",
     "logoUrl": "",
     "accent": "#3984FF"
   },
@@ -57,7 +57,7 @@
     "AI Dance": "AI Dance",
     "AI Generate": "AI Generate",
     "AI Image": "AI Image",
-    "AI Image And Video Generator": "AI Image And Video Generator",
+    "Genora AI Image & Video Editor": "Genora AI Image & Video Editor",
     "AI Photo": "AI Photo",
     "AI Photos": "AI Photos",
     "AI provider is not connected yet. No photos were uploaded and no coins were deducted.": "AI provider is not connected yet. No photos were uploaded and no coins were deducted.",
@@ -852,6 +852,11 @@
     "dance": true,
     "slideshow": true,
     "dailyRewards": true,
+    "ads": true,
+    "bannerAds": true,
+    "appOpenAds": true,
+    "interstitialAds": true,
+    "rewardedAds": true,
     "maintenance": false
   },
   "legal": {

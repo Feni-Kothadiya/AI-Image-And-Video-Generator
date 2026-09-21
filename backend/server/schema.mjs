@@ -133,6 +133,11 @@ export const configSchema = z
         dance: z.boolean(),
         slideshow: z.boolean(),
         dailyRewards: z.boolean(),
+        ads: z.boolean(),
+        bannerAds: z.boolean(),
+        appOpenAds: z.boolean(),
+        interstitialAds: z.boolean(),
+        rewardedAds: z.boolean(),
         maintenance: z.boolean(),
       })
       .strict(),
