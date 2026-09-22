@@ -5,8 +5,9 @@ services:
     runtime: node
     plan: free
     region: virginia
+    branch: main
     numInstances: 1
-    autoDeployTrigger: "off"
+    autoDeployTrigger: "commit"
     buildCommand: npm --prefix backend ci && npm --prefix frontend ci --include=dev && npm --prefix frontend run build
     startCommand: node backend/server/render-start.mjs
     healthCheckPath: /api/health
