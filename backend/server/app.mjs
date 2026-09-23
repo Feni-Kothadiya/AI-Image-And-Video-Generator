@@ -39,13 +39,20 @@ import {
   encrypt,
 } from "./security.mjs";
 import { createGateway, validateGatewayUrl } from "./gateway.mjs";
-import { createFalGateway, falModels, falSettings } from "./fal.mjs";
+import {
+  createFalGateway,
+  falImageCatalog,
+  falImageSizes,
+  falModels,
+  isFalImageModel,
+  normalizeFalSettings,
+} from "./fal.mjs";
 import { createJob, publicJob, settleJob, createWorker } from "./jobs.mjs";
 import { createPlayBilling } from "./play-billing.mjs";
 import { createBilling } from "./billing.mjs";
 export async function buildApp(options = {}) {
   const dataDir = resolve(options.dataDir || process.env.DATA_DIR || "./data");
-  mkdirSync(join(dataDir, "uploads"), { recursive: true });
+  mkdirSync(join(dataDir, "uploads"), { recursive: true, mode: 0o700 });
   const db =
     options.db || (await connectDatabase(join(dataDir, "studio.sqlite")));
   const key = masterKey(dataDir);
@@ -53,6 +60,7 @@ export async function buildApp(options = {}) {
   const billing = createBilling({ db, play, key });
   const storage = options.storage || createStorage({ dataDir });
   const falKey = options.falKey ?? process.env.FAL_KEY?.trim();
+  const verifyRewardedAd = options.verifyRewardedAd;
   const deletingUsers = new Set();
   async function presentJob(job) {
     const result = publicJob(job);
@@ -84,7 +92,7 @@ export async function buildApp(options = {}) {
   await app.register(cookie);
   await app.register(rateLimit, { max: 180, timeWindow: "1 minute" });
   await app.register(multipart, {
-    limits: { fileSize: 10 * 1024 * 1024, files: 1, fields: 2, parts: 3 },
+    limits: { fileSize: 30 * 1024 * 1024, files: 1, fields: 2, parts: 3 },
   });
   app.decorate("db", db);
   app.addHook("onRequest", async (req, reply) => {
@@ -186,6 +194,20 @@ export async function buildApp(options = {}) {
     content.home.featuredIds = content.home.featuredIds.filter((id) =>
       content.templates.some((t) => t.id === id),
     );
+    const billingReady = play.enabled;
+    const adsReady = content.features.ads && typeof verifyRewardedAd === "function";
+    if (!billingReady) {
+      content.plans = [];
+      content.coinPacks = [];
+      content.templates = content.templates.map((template) => ({ ...template, premium: false }));
+    }
+    if (!adsReady) {
+      content.features.ads = false;
+      content.features.bannerAds = false;
+      content.features.appOpenAds = false;
+      content.features.interstitialAds = false;
+      content.features.rewardedAds = false;
+    }
     return {
       ...published,
       content,
@@ -194,13 +216,66 @@ export async function buildApp(options = {}) {
         video: ready(integration, "video"),
         dance: ready(integration, "dance"),
         slideshow: ready(integration, "slideshow"),
-        billing: play.enabled,
-        ads: content.features.ads,
+        billing: billingReady,
+        ads: adsReady,
       },
       serverDate: new Date().toISOString().slice(0, 10),
     };
   }
   app.get("/api/config", async () => await configEnvelope());
+  const escapeHtml = (value = "") =>
+    String(value).replace(/[&<>"']/g, (character) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;",
+    })[character]);
+  const legalDocument = ({ title, text, content = "" }) => `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${escapeHtml(title)} · Genora</title><style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#05091a;color:#eef3ff;font:16px/1.7 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}main{width:min(760px,calc(100% - 32px));margin:48px auto;padding:clamp(24px,5vw,52px);background:linear-gradient(145deg,#111a38,#080d20);border:1px solid #26335f;border-radius:28px;box-shadow:0 24px 80px #0008}a{color:#5fd7ff}h1{font-size:clamp(30px,7vw,48px);line-height:1.1;margin:0 0 12px}p.policy{white-space:pre-wrap;color:#cbd5ef}.eyebrow{color:#66dcff;font-size:13px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}label{display:block;font-weight:700;margin:18px 0 7px}input{width:100%;padding:14px 16px;color:#fff;background:#080d20;border:1px solid #34446f;border-radius:12px;font:inherit}button{width:100%;margin-top:22px;padding:15px;border:0;border-radius:14px;background:linear-gradient(90deg,#13c6f3,#6755ff,#ff3caf);color:#fff;font:inherit;font-weight:800;cursor:pointer}button:disabled{opacity:.55;cursor:wait}.note,#result{color:#aebbdc;font-size:14px}#result{min-height:24px;margin-top:14px}.links{display:flex;gap:18px;flex-wrap:wrap;margin-top:28px}
+</style></head><body><main><div class="eyebrow">Genora AI Image &amp; Video Editor</div><h1>${escapeHtml(title)}</h1>${text ? `<p class="policy">${escapeHtml(text)}</p>` : content}<div class="links"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/account-deletion">Delete account</a></div></main></body></html>`;
+  app.get("/privacy", async (_req, reply) => {
+    const legal = (await getSetting(db, "published")).content.legal;
+    const text = legal.privacy + (legal.supportEmail ? `\n\nSupport: ${legal.supportEmail}` : "");
+    return reply.type("text/html; charset=utf-8").send(legalDocument({ title: "Privacy Policy", text }));
+  });
+  app.get("/terms", async (_req, reply) => {
+    const legal = (await getSetting(db, "published")).content.legal;
+    const text = legal.terms + (legal.supportEmail ? `\n\nSupport: ${legal.supportEmail}` : "");
+    return reply.type("text/html; charset=utf-8").send(legalDocument({ title: "Terms of Use", text }));
+  });
+  app.get("/account-deletion", async (_req, reply) =>
+    reply.type("text/html; charset=utf-8").send(legalDocument({
+      title: "Delete your account",
+      content: `<p class="note">Registered users can permanently delete their Genora account and associated server data here. You can also delete your account inside the app. Guest accounts without an email must be deleted inside the installed app.</p><form id="delete-form"><label for="email">Account email</label><input id="email" name="email" type="email" autocomplete="email" required maxlength="254"><label for="password">Password</label><input id="password" name="password" type="password" autocomplete="current-password" required minlength="12" maxlength="128"><label><input id="confirm" type="checkbox" required style="width:auto;margin-right:8px">I understand this permanently deletes my account, generation history, coins, uploads, and generated server files.</label><button id="submit" type="submit">Permanently delete account</button><p id="result" role="status" aria-live="polite"></p></form><script src="/account-deletion.js" defer></script>`,
+    })),
+  );
+  app.get("/account-deletion.js", async (_req, reply) =>
+    reply.type("application/javascript; charset=utf-8").send(`document.getElementById("delete-form").addEventListener("submit",async function(event){event.preventDefault();const button=document.getElementById("submit"),result=document.getElementById("result");button.disabled=true;result.textContent="Deleting account…";try{const response=await fetch("/api/account-deletion",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:document.getElementById("email").value,password:document.getElementById("password").value,confirmation:"DELETE"})});const body=await response.json();if(!response.ok)throw new Error(body.error||"Deletion could not be completed.");event.target.reset();result.textContent="Your account and associated server data were permanently deleted."}catch(error){result.textContent=error.message}finally{button.disabled=false}});`),
+  );
+  app.post(
+    "/api/account-deletion",
+    { config: { rateLimit: { max: 5, timeWindow: "1 hour" } } },
+    async (req) => {
+      const input = parse(
+        credentialsSchema.extend({ confirmation: z.literal("DELETE") }),
+        req.body,
+      );
+      const user = await db
+        .prepare("SELECT * FROM users WHERE email=? AND role='user'")
+        .get(input.email);
+      if (
+        !user ||
+        user.status !== "active" ||
+        !(await verifyPassword(input.password, user.password))
+      )
+        fail(401, "Email or password is incorrect, or the account is unavailable.");
+      await deleteUser(user.id, user.id);
+      return { ok: true };
+    },
+  );
   app.post(
     "/api/auth/guest",
     { config: { rateLimit: { max: 15, timeWindow: "1 hour" } } },
@@ -435,21 +510,32 @@ export async function buildApp(options = {}) {
         z
           .object({
             templateId: z.string().max(80).optional(),
+            jobId: z.string().uuid().optional(),
             reason: z.string().trim().min(1).max(200),
             detail: z.string().max(2000).default(""),
           })
           .strict(),
         req.body,
       );
+      if (!input.templateId && !input.jobId)
+        fail(400, "Choose the generated content or template being reported.");
+      if (input.jobId) {
+        const job = await db
+          .prepare("SELECT status FROM jobs WHERE id=? AND user_id=?")
+          .get(input.jobId, req.user.id);
+        if (!job || job.status !== "succeeded")
+          fail(404, "Generated content was not found.");
+      }
       const id = randomUUID();
       await db
         .prepare(
-          "INSERT INTO reports(id,user_id,template_id,reason,detail,created_at) VALUES(?,?,?,?,?,?)",
+          "INSERT INTO reports(id,user_id,template_id,job_id,reason,detail,created_at) VALUES(?,?,?,?,?,?,?)",
         )
         .run(
           id,
           req.user.id,
           input.templateId || null,
+          input.jobId || null,
           input.reason,
           input.detail,
           now(),
@@ -478,12 +564,27 @@ export async function buildApp(options = {}) {
     { preHandler: mobile, config: { rateLimit: { max: 12, timeWindow: "1 day" } } },
     async (req) => {
       const input = parse(
-        z.object({ claimId: z.string().uuid(), offer: z.enum(["single", "double"]) }).strict(),
+        z.object({
+          claimId: z.string().uuid(),
+          offer: z.enum(["single", "double"]),
+          verificationToken: z.string().min(16).max(8192),
+        }).strict(),
         req.body,
       );
       const published = await getSetting(db, "published");
       if (!published.content.features.ads || !published.content.features.rewardedAds)
         fail(503, "Rewarded ads are currently disabled.");
+      if (typeof verifyRewardedAd !== "function")
+        fail(503, "Rewarded-ad verification is not configured. No coins were credited.");
+      if (
+        (await verifyRewardedAd({
+          userId: req.user.id,
+          claimId: input.claimId,
+          offer: input.offer,
+          token: input.verificationToken,
+        })) !== true
+      )
+        fail(403, "The rewarded ad could not be verified. No coins were credited.");
       const today = new Date().toISOString().slice(0, 10);
       const reason = input.offer === "double" ? "Rewarded ads (2)" : "Rewarded ad";
       const dailyLimit = input.offer === "double" ? 2 : 8;
@@ -523,7 +624,7 @@ export async function buildApp(options = {}) {
     } catch {
       fail(400, "Only PNG, JPEG, and WebP images are supported.");
     }
-    const { ext, mime } = mediaType;
+    const { ext, mime, width, height } = mediaType;
     if (used + buffer.length > 200 * 1024 * 1024)
       fail(413, "Media storage quota reached.");
     const id = randomUUID(),
@@ -557,7 +658,7 @@ export async function buildApp(options = {}) {
           fail(413, "Media storage quota reached.");
         await db
           .prepare(
-            "INSERT INTO uploads(id,user_id,filename,mime,bytes,public,created_at,storage) VALUES(?,?,?,?,?,?,?,?)",
+            "INSERT INTO uploads(id,user_id,filename,mime,bytes,public,created_at,storage,width,height) VALUES(?,?,?,?,?,?,?,?,?,?)",
           )
           .run(
             id,
@@ -568,6 +669,8 @@ export async function buildApp(options = {}) {
             isPublic ? 1 : 0,
             now(),
             stored ? JSON.stringify(stored) : null,
+            width || null,
+            height || null,
           );
       });
     } catch (error) {
@@ -1043,11 +1146,25 @@ export async function buildApp(options = {}) {
     await audit(db, req.user.id, "job.cancel", job.id);
     return { ok: true };
   });
-  app.get("/api/admin/reports", { preHandler: admin }, async () => ({
-    reports: await db
+  app.get("/api/admin/reports", { preHandler: admin }, async () => {
+    const reports = await db
       .prepare("SELECT * FROM reports ORDER BY created_at DESC LIMIT 200")
-      .all(),
-  }));
+      .all();
+    return {
+      reports: await Promise.all(reports.map(async (report) => {
+        const job = report.job_id
+          ? await db.prepare("SELECT * FROM jobs WHERE id=?").get(report.job_id)
+          : null;
+        const result = job ? await presentJob(job) : null;
+        return {
+          ...report,
+          jobMode: result?.mode || null,
+          jobStatus: result?.status || null,
+          resultUrl: result?.resultUrl || null,
+        };
+      })),
+    };
+  });
   app.patch("/api/admin/reports/:id", { preHandler: admin }, async (req) => {
     const input = parse(
       z.object({ status: z.enum(["open", "reviewing", "resolved"]) }).strict(),
@@ -1097,16 +1214,23 @@ export async function buildApp(options = {}) {
     return { ok: true };
   });
   app.get("/api/admin/integration", { preHandler: admin }, async () => {
-    const { secret, ...settings } = await getSetting(db, "integration");
+    const saved = await getSetting(db, "integration");
+    const { secret, ...rawSettings } = saved;
+    const settings = rawSettings.provider === "fal"
+      ? normalizeFalSettings(rawSettings)
+      : rawSettings;
     return {
       ...settings,
       hasKey: settings.provider === "fal" ? !!falKey : !!secret,
       ...(settings.provider === "fal"
         ? {
             falModels,
+            imageCatalog: falImageCatalog,
+            imageSizes: falImageSizes,
+            pricingChecked: falImageCatalog.pricingChecked,
             keySource: "environment",
             output: {
-              imageSize: "960 × 960",
+              imageSize: "Admin-selected size for text generation; source aspect for edits",
               video: "720p model · requested 5.4 seconds",
               perRequest: 1,
             },
@@ -1115,7 +1239,11 @@ export async function buildApp(options = {}) {
       allowedHosts,
       services: (await configEnvelope()).services,
       billing: play.enabled ? "configured" : "not_configured",
-      ads: (await getSetting(db, "published")).content.features.ads ? "enabled" : "disabled",
+      ads:
+        (await getSetting(db, "published")).content.features.ads &&
+        typeof verifyRewardedAd === "function"
+          ? "enabled"
+          : "disabled",
     };
   });
   app.put("/api/admin/integration", { preHandler: admin }, async (req) => {
@@ -1140,12 +1268,19 @@ export async function buildApp(options = {}) {
           .get()
       )
         fail(409, "Wait for active jobs before changing provider settings.");
-      await setSetting(db, "integration", {
-        ...falSettings,
-        enabled: input.settings.enabled,
-      });
+      const imageModel = input.settings.models.image;
+      const editModel = input.settings.models.edit;
+      if (!isFalImageModel("image", imageModel))
+        fail(400, "Choose a supported image generation model.");
+      if (!isFalImageModel("edit", editModel))
+        fail(400, "Choose a supported image editing model.");
+      const settings = normalizeFalSettings(input.settings);
+      await setSetting(db, "integration", settings);
       await audit(db, req.user.id, "integration.update", "fal", {
-        enabled: input.settings.enabled,
+        enabled: settings.enabled,
+        imageModel: settings.models.image,
+        editModel: settings.models.edit,
+        imageSize: settings.imageSize,
       });
       return { ok: true };
     }
@@ -1188,7 +1323,6 @@ export async function buildApp(options = {}) {
     purchases: await db
       .prepare("SELECT * FROM purchases ORDER BY created_at DESC LIMIT 100")
       .all(),
-    configured: false,
   }));
   const dist = resolve(
     options.frontendDist ||

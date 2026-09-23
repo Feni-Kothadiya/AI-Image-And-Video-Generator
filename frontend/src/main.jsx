@@ -969,6 +969,9 @@ function ContentEditor({ content: c, update }) {
             ))}
           </Panel>
           <Panel title="Support & announcements">
+            <div className="callout">
+              Public Play Console links: <a href="/privacy" target="_blank" rel="noreferrer">Privacy policy</a>{" · "}<a href="/terms" target="_blank" rel="noreferrer">Terms</a>{" · "}<a href="/account-deletion" target="_blank" rel="noreferrer">Account deletion</a>
+            </div>
             <Field
               label="Support email"
               type="email"
@@ -1673,7 +1676,7 @@ function MediaLibrary({ revision, run, busy }) {
       <div className="callout">
         <Image size={19} />
         <span>
-          Upload PNG, JPEG, or WebP files up to 10 MB. These are public app
+          Upload PNG, JPEG, or WebP files up to 30 MB. These are public app
           assets. Users' private input photos are kept separate.
         </span>
       </div>
@@ -2184,7 +2187,7 @@ function Reports({ revision, run, busy }) {
             <thead>
               <tr>
                 <th>Report</th>
-                <th>Template</th>
+                <th>Reported content</th>
                 <th>Submitted</th>
                 <th>Status</th>
               </tr>
@@ -2196,7 +2199,21 @@ function Reports({ revision, run, busy }) {
                     <strong>{r.reason}</strong>
                     <small>{r.detail || "No additional details"}</small>
                   </td>
-                  <td>{r.template_id || "General"}</td>
+                  <td>
+                    {r.job_id ? (
+                      <>
+                        <strong>{r.jobMode || "Generation"}</strong>
+                        <small>{r.job_id}</small>
+                        {r.resultUrl && (
+                          <a href={r.resultUrl} target="_blank" rel="noreferrer">
+                            Review output <ArrowUpRight size={14} />
+                          </a>
+                        )}
+                      </>
+                    ) : (
+                      r.template_id || "General"
+                    )}
+                  </td>
                   <td>{date(r.created_at)}</td>
                   <td>
                     <select
@@ -2358,6 +2375,7 @@ function Integrations({ revision, run, busy }) {
         enabled: data.enabled,
         gatewayUrl: data.gatewayUrl,
         models: data.models,
+        ...(data.imageSize ? { imageSize: data.imageSize } : {}),
       });
   }, [data]);
   if (!data || !settings) return <Load error={error} />;
@@ -2365,7 +2383,7 @@ function Integrations({ revision, run, busy }) {
     return (
       <Panel
         title="fal.ai generation"
-        description="Images and short videos with economical model settings"
+        description="Choose image quality, edit quality, output shape, and provider cost"
       >
         <div className="callout">
           <Shield size={19} />
@@ -2391,12 +2409,34 @@ function Integrations({ revision, run, busy }) {
             hint="One result per request, with up to two active generations across the app."
           />
           <div className="form-grid">
-            <Field
-              label="Text to image"
-              value={data.falModels.image}
-              readOnly
-            />
-            <Field label="Photo editing" value={data.falModels.edit} readOnly />
+            <Field label="Text-to-image model" hint="Controls new images made from a written prompt.">
+              <select
+                value={settings.models.image}
+                onChange={(e) => setSettings({ ...settings, models: { ...settings.models, image: e.target.value } })}
+              >
+                {data.imageCatalog.image.map((model) => (
+                  <option key={model.id} value={model.id}>{model.label} — {model.estimate}</option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Photo-editing model" hint="Controls generations that include an uploaded photo.">
+              <select
+                value={settings.models.edit}
+                onChange={(e) => setSettings({ ...settings, models: { ...settings.models, edit: e.target.value } })}
+              >
+                {data.imageCatalog.edit.map((model) => (
+                  <option key={model.id} value={model.id}>{model.label} — {model.estimate}</option>
+                ))}
+              </select>
+            </Field>
+            <Field label="New-image shape" hint="Photo edits automatically follow the uploaded image's aspect ratio.">
+              <select
+                value={settings.imageSize}
+                onChange={(e) => setSettings({ ...settings, imageSize: e.target.value })}
+              >
+                {data.imageSizes.map((size) => <option key={size.id} value={size.id}>{size.label}</option>)}
+              </select>
+            </Field>
             <Field
               label="Image to video / dance"
               value={data.falModels.video}
@@ -2408,8 +2448,20 @@ function Integrations({ revision, run, busy }) {
               readOnly
             />
           </div>
+          <h3 className="model-heading">Image model pricing</h3>
+          <div className="model-options">
+            {[...data.imageCatalog.image, ...data.imageCatalog.edit].map((model) => (
+              <article className="model-option" key={model.id}>
+                <div><strong>{model.label}</strong><Badge tone={model.tier === "Recommended" ? "green" : ""}>{model.tier}</Badge></div>
+                <p className="model-price">{model.price}</p>
+                <p>{model.description}</p>
+                <a href={model.docs} target="_blank" rel="noreferrer">Official fal.ai documentation ↗</a>
+              </article>
+            ))}
+          </div>
+          <p className="muted-copy">Provider prices checked {data.pricingChecked}. Charges are estimates and are paid from your fal.ai balance; verify official pricing before changing your customer coin costs.</p>
           <p>
-            Images: 960 × 960 PNG. Videos: 720p MP4, requested duration 5.4 seconds,
+            Images: PNG in the selected aspect ratio. Photo edits preserve the source shape. Videos: 720p MP4, requested duration 5.4 seconds,
             without generated audio. The provider may return a different duration or resolution.
           </p>
           <p>

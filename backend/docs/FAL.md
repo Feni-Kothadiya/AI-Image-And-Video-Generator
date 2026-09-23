@@ -2,28 +2,33 @@
 
 Set `FAL_KEY` in the backend environment, then run `npm run fal:setup` while the
 backend has no active jobs. Restart the backend after changing the key. Setup
-enables the fixed economy presets in the configured database; it makes no paid
-generation requests. The dashboard's Integrations page shows the models and lets
-the administrator pause new generations. Keys stay in the environment, never in
+enables the recommended production presets in the configured database; it makes no paid
+generation requests. The dashboard's Integrations page lets the administrator choose
+the generation model, editing model, output shape, and pause new generations. Keys stay in the environment, never in
 the frontend, mobile bundle, database job snapshots, or logs.
 
 ## Models and output settings
 
-| Request                | Endpoint                                           | Settings                                           | Indicative cost |
-| ---------------------- | -------------------------------------------------- | -------------------------------------------------- | --------------- |
-| Text to image          | fal-ai/flux/schnell                                | One 960 × 960 PNG, 4 steps                         | $0.003          |
-| Photo edit             | fal-ai/flux-2/klein/4b/base/edit                   | One input, one 960 × 960 PNG, 28 steps, guidance 5 | ~$0.018         |
-| Image to video / dance | fal-ai/longcat-video/distilled/image-to-video/720p | 162 frames, 30 fps, 720p H.264 MP4                 | ~$0.054         |
-| Text to video          | fal-ai/longcat-video/distilled/text-to-video/720p  | Same video preset, portrait format                 | ~$0.054         |
+| Request/model          | Endpoint                                           | Output behavior                              | Indicative cost |
+| ---------------------- | -------------------------------------------------- | -------------------------------------------- | --------------- |
+| Recommended image      | fal-ai/flux-2-pro                                  | Admin-selected aspect ratio, PNG             | $0.03 first output MP; $0.015/additional MP |
+| Balanced image         | fal-ai/flux-2/klein/9b/base                        | Admin-selected aspect ratio, 32 steps, PNG   | $0.011/output MP |
+| Economy image          | fal-ai/flux/schnell                                | Admin-selected aspect ratio, 4 steps, PNG    | $0.003/output MP |
+| Recommended edit       | fal-ai/flux-pro/kontext                            | One source; nearest source aspect ratio; PNG | $0.04/image |
+| Maximum edit           | fal-ai/flux-pro/kontext/max                        | One source; nearest source aspect ratio; PNG | $0.08/image |
+| Balanced edit          | fal-ai/flux-2/klein/9b/base/edit                   | One source; provider uses source dimensions  | $0.011/input and output MP |
+| Image to video / dance | fal-ai/longcat-video/distilled/image-to-video/720p | 162 frames, 30 fps, 720p H.264 MP4           | Check current provider price |
+| Text to video          | fal-ai/longcat-video/distilled/text-to-video/720p  | Same video preset, portrait format           | Check current provider price |
 
-Rates were checked against fal's model pages during implementation. Video billing
+Image rates were checked against fal's official model pages on 2026-09-23. Video billing
 uses 30 frames per second, so 162 frames request a 5.4-second clip. Provider output can differ from the requested duration or resolution; these are request settings, not hard billing caps. Image dimensions
-stay below one decimal megapixel to avoid an extra output megapixel charge.
-Input editing is billed separately. Actual charges are controlled by fal and may
+follow the administrator's selected output shape; photo edits follow the source aspect ratio instead of forcing a square.
+Input editing may be billed separately. Actual charges are controlled by fal and may
 change; these estimates are not a billing guarantee. Prompt expansion is disabled,
-one output is requested, and standard inference steps preserve the model's normal
-quality. No automatic paid upscaling, audio generation, or multi-stage enhancement
-is performed. The API does not accept client-selected models or output quantities.
+one output is requested. Generation and editing prompts are expanded on the server
+with composition, lighting, material, anatomy, identity, and bounded-edit constraints.
+No automatic paid upscaling, audio generation, or multi-stage enhancement is performed.
+Only administrators can select models; mobile clients cannot select them.
 
 Dance uses prompt-guided image animation, not reference-video choreography transfer.
 Slideshow generation remains unavailable for this integration. The app receives
@@ -31,7 +36,7 @@ accurate service flags through `/api/config`.
 
 ## Upload and result flow
 
-1. The signed-in app uploads a PNG/JPEG/WebP to `/api/uploads`.
+1. The signed-in app uploads the original PNG/JPEG/WebP bytes to `/api/uploads`, without resizing or recompressing. Unsupported phone formats are converted to maximum-quality JPEG only when required.
 2. The backend saves it to private R2 and stores ownership and an object reference
    in Neon. It returns an upload ID and an authenticated app URL.
 3. The app submits the upload ID and prompt to `/api/jobs` with an idempotency key.
@@ -78,7 +83,7 @@ Run one backend worker instance. Multi-instance worker leasing is not implemente
 `npm test` uses simulated fal/R2 and temporary databases; it does not load `.env`
 or spend credits. For PostgreSQL tests, use a dedicated `TEST_POSTGRES_URL`.
 
-The following explicit live check spends approximately $0.075 at the rates above:
+The following explicit live check makes paid provider requests; review current fal pricing first:
 
 ```sh
 npm run fal:smoke -- --confirm-paid-test
@@ -94,7 +99,11 @@ command starts a new paid test; investigate a failed run before doing so.
 References: [keys](https://fal.ai/docs/documentation/setting-up/authentication),
 [queue API](https://fal.ai/docs/documentation/model-apis/inference/queue),
 [Schnell](https://fal.ai/models/fal-ai/flux/schnell),
-[Klein](https://fal.ai/models/fal-ai/flux-2/klein/4b/base/edit),
+[FLUX.2 Pro](https://fal.ai/models/fal-ai/flux-2-pro),
+[Klein 9B](https://fal.ai/models/fal-ai/flux-2/klein/9b/base),
+[Klein 9B edit](https://fal.ai/models/fal-ai/flux-2/klein/9b/base/edit),
+[Kontext Pro](https://fal.ai/models/fal-ai/flux-pro/kontext),
+[Kontext Max](https://fal.ai/models/fal-ai/flux-pro/kontext/max),
 [LongCat image-to-video](https://fal.ai/models/fal-ai/longcat-video/distilled/image-to-video/720p),
 [LongCat text-to-video](https://fal.ai/models/fal-ai/longcat-video/distilled/text-to-video/720p).
 

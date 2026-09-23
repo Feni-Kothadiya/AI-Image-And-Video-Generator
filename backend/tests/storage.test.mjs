@@ -162,6 +162,16 @@ test("download checks byte limits and actual media signatures including MP4", as
       Object.assign(Readable.from([bytes]), { headers });
   try {
     assert.equal(detectMedia(png).mime, "image/png");
+    const sizedPng = Buffer.alloc(24);
+    Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]).copy(sizedPng);
+    sizedPng.writeUInt32BE(2048, 16);
+    sizedPng.writeUInt32BE(1536, 20);
+    assert.deepEqual(detectMedia(sizedPng), {
+      mime: "image/png",
+      ext: "png",
+      width: 2048,
+      height: 1536,
+    });
     assert.equal(detectMedia(mp4, true).mime, "video/mp4");
     assert.throws(
       () => detectMedia(Buffer.from("<html>not an image</html>"), true),

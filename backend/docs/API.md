@@ -20,7 +20,7 @@ state conflicts 409, rate limits 429, and unconfigured services 503.
 | DELETE     | /api/me              | confirmation: DELETE and password for registered accounts          |
 | GET        | /api/wallet          | Balance and latest 100 ledger entries                              |
 | POST       | /api/rewards/daily   | Atomic once-per-UTC-day claim                                      |
-| POST       | /api/uploads         | Authenticated multipart file, PNG/JPEG/WebP, maximum 10 MB         |
+| POST       | /api/uploads         | Authenticated multipart file, PNG/JPEG/WebP, maximum 30 MB         |
 | GET/DELETE | /api/uploads/:id     | Owner-only private input image access/deletion                     |
 | POST       | /api/jobs            | Reserve coins and enqueue work; requires Idempotency-Key           |
 | GET        | /api/jobs            | Latest 100 generations belonging to the current account            |
@@ -28,7 +28,7 @@ state conflicts 409, rate limits 429, and unconfigured services 503.
 | POST       | /api/jobs/:id/cancel | Cancel queued work and refund; processing jobs cannot be cancelled |
 | POST       | /api/reports         | reason, optional templateId and detail                             |
 | POST       | /api/billing/verify  | Disabled until Google Play verification is implemented             |
-| POST       | /api/rewards/ad      | Disabled until verified ad callbacks are implemented               |
+| POST       | /api/rewards/ad      | Requires a server-verified ad token; unverified claims fail closed  |
 
 Except health, config, guest, and login, app routes require Authorization: Bearer TOKEN.
 Sessions expire after 30 days. Passwords must contain 12–128 characters.

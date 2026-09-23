@@ -11,7 +11,7 @@ export const defaults = JSON.parse(
 );
 export async function openDatabase(filename, { seed = true } = {}) {
   if (filename !== ":memory:")
-    mkdirSync(dirname(filename), { recursive: true });
+    mkdirSync(dirname(filename), { recursive: true, mode: 0o700 });
   const db = sqliteDriver(filename);
   try {
     await db.exec(
@@ -30,6 +30,32 @@ export async function openDatabase(filename, { seed = true } = {}) {
         );
         await db
           .prepare("INSERT INTO schema_migrations VALUES(2,?)")
+          .run(now());
+      });
+    }
+    if (
+      !(await db
+        .prepare("SELECT 1 FROM schema_migrations WHERE version=3")
+        .get())
+    ) {
+      await db.transaction(async () => {
+        await db.exec("ALTER TABLE uploads ADD COLUMN width INTEGER");
+        await db.exec("ALTER TABLE uploads ADD COLUMN height INTEGER");
+        await db
+          .prepare("INSERT INTO schema_migrations VALUES(3,?)")
+        .run(now());
+      });
+    }
+    if (
+      !(await db
+        .prepare("SELECT 1 FROM schema_migrations WHERE version=4")
+        .get())
+    ) {
+      await db.transaction(async () => {
+        await db.exec("ALTER TABLE reports ADD COLUMN job_id TEXT");
+        await db.exec("CREATE INDEX IF NOT EXISTS reports_job ON reports(job_id)");
+        await db
+          .prepare("INSERT INTO schema_migrations VALUES(4,?)")
           .run(now());
       });
     }
@@ -93,13 +119,32 @@ async function seedDatabase(db) {
         models: { image: "", video: "", dance: "", slideshow: "" },
       });
     } else {
-      // Keep existing installations compatible when new remote feature switches are added.
+      // Keep existing installations compatible and replace only the original
+      // pre-release placeholders. Administrator-authored content is preserved.
       for (const key of ["published", "draft"]) {
         const saved = await getSetting(db, key);
         if (!saved?.content?.features) continue;
-        const features = { ...defaults.features, ...saved.content.features };
-        if (JSON.stringify(features) !== JSON.stringify(saved.content.features))
-          await setSetting(db, key, { ...saved, content: { ...saved.content, features } });
+        const content = structuredClone(saved.content);
+        content.features = { ...defaults.features, ...content.features };
+        if (
+          content.legal?.privacy ===
+          "Privacy policy is being prepared. This app is not yet available for public release."
+        )
+          content.legal.privacy = defaults.legal.privacy;
+        if (
+          content.legal?.terms ===
+          "Terms of use are being prepared. Payments and rewarded advertising are not active."
+        )
+          content.legal.terms = defaults.legal.terms;
+        if (
+          content.legal?.announcement ===
+          "Create something new. AI services will be available when your administrator connects a provider."
+        )
+          content.legal.announcement = defaults.legal.announcement;
+        if (content.branding?.appName === "AI Image And Video Generator")
+          content.branding.appName = defaults.branding.appName;
+        if (JSON.stringify(content) !== JSON.stringify(saved.content))
+          await setSetting(db, key, { ...saved, content });
       }
     }
   });

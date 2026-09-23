@@ -9,7 +9,7 @@ The app creates an automatic installation wallet, so users can purchase without 
 
 ## 1. Create the products in Play Console
 
-Use package `ai.video.generator.image.generator` for the Play Console app and build.
+Use package `ai.genora.image.video.editor` for the Play Console app and build.
 Complete the Play Console account/payment profile setup and upload a signed Android
 App Bundle to an internal testing track. The native billing module requires a new build;
 an old APK or Expo Go cannot test these purchases.
@@ -53,7 +53,7 @@ rhythm (`v2`), and City diary (`s1`). Other templates remain accessible without 
 
 ```dotenv
 PLAY_BILLING_ENABLED=0
-PLAY_PACKAGE_NAME=ai.video.generator.image.generator
+PLAY_PACKAGE_NAME=ai.genora.image.video.editor
 GOOGLE_APPLICATION_CREDENTIALS=/absolute/backend/data/google-play-service-account.json
 PLAY_RTDN_AUDIENCE=https://YOUR_BACKEND/api/billing/notifications
 PLAY_RTDN_SERVICE_ACCOUNT=play-push@YOUR_PROJECT.iam.gserviceaccount.com

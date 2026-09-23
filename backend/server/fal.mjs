@@ -1,49 +1,216 @@
 import { safeResultUrl } from "./gateway.mjs";
+import {
+  compileEditPrompt,
+  compileGenerationPrompt,
+} from "./image-prompts.mjs";
 
 export const falModels = Object.freeze({
-  image: "fal-ai/flux/schnell",
-  edit: "fal-ai/flux-2/klein/4b/base/edit",
+  image: "fal-ai/flux-2-pro",
+  edit: "fal-ai/flux-pro/kontext",
   video: "fal-ai/longcat-video/distilled/image-to-video/720p",
   textVideo: "fal-ai/longcat-video/distilled/text-to-video/720p",
 });
+export const falImageCatalog = Object.freeze({
+  image: [
+    {
+      id: "fal-ai/flux/schnell",
+      label: "FLUX.1 Schnell",
+      tier: "Economy",
+      price: "$0.003 per output megapixel",
+      estimate: "About $0.003 at 1 MP",
+      description: "Fastest and cheapest; best for previews and high-volume drafts.",
+      docs: "https://fal.ai/models/fal-ai/flux/schnell",
+    },
+    {
+      id: "fal-ai/flux-2/klein/9b/base",
+      label: "FLUX.2 Klein 9B",
+      tier: "Balanced",
+      price: "$0.011 per output megapixel",
+      estimate: "About $0.011 at 1 MP",
+      description: "Better realism and prompt fidelity with configurable inference quality.",
+      docs: "https://fal.ai/models/fal-ai/flux-2/klein/9b/base",
+    },
+    {
+      id: "fal-ai/flux-2-pro",
+      label: "FLUX.2 Pro",
+      tier: "Recommended",
+      price: "$0.03 for the first output MP, then $0.015 per additional MP",
+      estimate: "$0.03 at 1 MP",
+      description: "Production-oriented quality and consistency without manual step tuning.",
+      docs: "https://fal.ai/models/fal-ai/flux-2-pro",
+    },
+  ],
+  edit: [
+    {
+      id: "fal-ai/flux-2/klein/9b/base/edit",
+      label: "FLUX.2 Klein 9B Edit",
+      tier: "Balanced",
+      price: "$0.011 per input MP and output MP",
+      estimate: "About $0.022 for 1 MP input + 1 MP output",
+      description: "Cost-controlled general editing; the provider normalizes input to 1 MP.",
+      docs: "https://fal.ai/models/fal-ai/flux-2/klein/9b/base/edit",
+    },
+    {
+      id: "fal-ai/flux-pro/kontext",
+      label: "FLUX.1 Kontext Pro",
+      tier: "Recommended",
+      price: "$0.04 per image",
+      estimate: "$0.04 per edit",
+      description: "Strong local edits and character consistency for production use.",
+      docs: "https://fal.ai/models/fal-ai/flux-pro/kontext",
+    },
+    {
+      id: "fal-ai/flux-pro/kontext/max",
+      label: "FLUX.1 Kontext Max",
+      tier: "Maximum",
+      price: "$0.08 per image",
+      estimate: "$0.08 per edit",
+      description: "Highest prompt adherence and consistency for demanding edits.",
+      docs: "https://fal.ai/models/fal-ai/flux-pro/kontext/max",
+    },
+  ],
+  pricingChecked: "2026-09-23",
+});
+const imageEndpoints = new Set(falImageCatalog.image.map((m) => m.id));
+const editEndpoints = new Set(falImageCatalog.edit.map((m) => m.id));
+export const isFalImageModel = (kind, id) =>
+  (kind === "image" ? imageEndpoints : editEndpoints).has(id);
+export const falImageSizes = Object.freeze([
+  { id: "square_hd", label: "Square · 1:1" },
+  { id: "portrait_4_3", label: "Portrait · 3:4" },
+  { id: "portrait_16_9", label: "Portrait · 9:16" },
+  { id: "landscape_4_3", label: "Landscape · 4:3" },
+  { id: "landscape_16_9", label: "Landscape · 16:9" },
+]);
 export const falSettings = {
   provider: "fal",
   enabled: true,
   gatewayUrl: "https://queue.fal.run",
+  imageSize: "square_hd",
   models: {
     image: falModels.image,
+    edit: falModels.edit,
     video: falModels.video,
     dance: falModels.video,
     slideshow: "",
   },
 };
 
-export function falInput(input, urls = []) {
+export function normalizeFalSettings(settings = {}) {
+  const models = settings.models || {};
+  return {
+    ...falSettings,
+    enabled: !!settings.enabled,
+    imageSize: falImageSizes.some((size) => size.id === settings.imageSize)
+      ? settings.imageSize
+      : falSettings.imageSize,
+    models: {
+      ...falSettings.models,
+      image: imageEndpoints.has(models.image) ? models.image : falModels.image,
+      edit: editEndpoints.has(models.edit) ? models.edit : falModels.edit,
+    },
+  };
+}
+
+export function nearestAspectRatio(width, height) {
+  if (!(width > 0 && height > 0)) return undefined;
+  const ratio = width / height;
+  return [
+    ["21:9", 21 / 9],
+    ["16:9", 16 / 9],
+    ["4:3", 4 / 3],
+    ["3:2", 3 / 2],
+    ["1:1", 1],
+    ["2:3", 2 / 3],
+    ["3:4", 3 / 4],
+    ["9:16", 9 / 16],
+    ["9:21", 9 / 21],
+  ].reduce((best, candidate) =>
+    Math.abs(candidate[1] - ratio) < Math.abs(best[1] - ratio)
+      ? candidate
+      : best,
+  )[0];
+}
+
+export function falInput(input, urls = [], settings = falSettings, uploads = []) {
   if (!["image", "video", "dance"].includes(input.mode))
     throw new Error("This tool is not supported by the fal integration.");
   if (urls.length > 1 || (input.mode === "dance" && urls.length !== 1))
     throw new Error("This tool requires a single input photo.");
-  let prompt = input.prompt;
-  if (urls.length) {
-    prompt += "\nPreserve the subject's identity and facial features.";
-    if (input.background === "Original")
-      prompt += " Keep the original background.";
-    else prompt += " Adapt the background to the requested scene.";
-  }
+  const normalized = normalizeFalSettings({ ...settings, enabled: true });
   if (input.mode === "image") {
+    const prompt = urls.length
+      ? compileEditPrompt(input.prompt, { background: input.background })
+      : compileGenerationPrompt(input.prompt);
+    const model = urls.length
+      ? normalized.models.edit
+      : normalized.models.image;
+    if (urls.length && model.startsWith("fal-ai/flux-pro/kontext")) {
+      const aspectRatio = nearestAspectRatio(uploads[0]?.width, uploads[0]?.height);
+      return {
+        model,
+        input: {
+          prompt,
+          image_url: urls[0],
+          guidance_scale: 3.5,
+          num_images: 1,
+          output_format: "png",
+          safety_tolerance: "2",
+          enhance_prompt: true,
+          ...(aspectRatio ? { aspect_ratio: aspectRatio } : {}),
+        },
+      };
+    }
+    if (urls.length) {
+      return {
+        model,
+        input: {
+          prompt,
+          image_urls: urls,
+          negative_prompt:
+            "identity drift, changed face, altered pose, changed crop, unrelated objects, duplicate people, malformed hands, watermark, caption, blurry detail",
+          num_images: 1,
+          num_inference_steps: 32,
+          guidance_scale: 4.5,
+          acceleration: "regular",
+          enable_safety_checker: true,
+          output_format: "png",
+        },
+      };
+    }
+    if (model === "fal-ai/flux-2-pro") {
+      return {
+        model,
+        input: {
+          prompt,
+          image_size: normalized.imageSize,
+          enable_safety_checker: true,
+          safety_tolerance: "2",
+          output_format: "png",
+        },
+      };
+    }
     return {
-      model: urls.length ? falModels.edit : falModels.image,
+      model,
       input: {
         prompt,
-        // Under one decimal megapixel, with dimensions divisible by 32.
-        image_size: { width: 960, height: 960 },
+        image_size: normalized.imageSize,
         num_images: 1,
-        num_inference_steps: urls.length ? 28 : 4,
+        num_inference_steps:
+          model === "fal-ai/flux/schnell" ? 4 : 32,
+        guidance_scale:
+          model === "fal-ai/flux/schnell" ? 3.5 : 4,
         enable_safety_checker: true,
         output_format: "png",
-        ...(urls.length ? { image_urls: urls, guidance_scale: 5 } : {}),
       },
     };
+  }
+  let prompt = input.prompt;
+  if (urls.length) {
+    prompt +=
+      ". Preserve the exact identity, face, body proportions, clothing, and framing of the input person.";
+    if (input.background)
+      prompt += ` Replace only the background with: ${input.background}.`;
   }
   return {
     model: urls.length ? falModels.video : falModels.textVideo,
@@ -129,7 +296,7 @@ export function createFalGateway({
   request = falRequest,
 }) {
   return {
-    async run(job) {
+    async run(job, config = falSettings) {
       if (!apiKey || storage.mode !== "r2")
         throw new Error("fal requires an API key and R2.");
       let tracked = await db
@@ -144,7 +311,7 @@ export function createFalGateway({
       }
       if (!tracked) {
         const input = JSON.parse(job.request);
-        const urls = [];
+        const urls = [], uploads = [];
         for (const id of input.uploadIds) {
           const upload = await db
             .prepare(
@@ -155,6 +322,7 @@ export function createFalGateway({
             throw Object.assign(new Error("Input photo is unavailable."), {
               terminal: true,
             });
+          uploads.push(upload);
           // Upgrade any pre-R2 input before giving fal its signed URL.
           if (!upload.storage) {
             const media = await storage.putUpload(
@@ -171,7 +339,7 @@ export function createFalGateway({
           }
           urls.push(await storage.inputUrl(upload));
         }
-        const payload = falInput(input, urls);
+        const payload = falInput(input, urls, config, uploads);
         // Durable marker BEFORE the POST: a crash or lost response must never resubmit.
         const claim = await db
           .prepare(

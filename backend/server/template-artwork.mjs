@@ -47,7 +47,7 @@ export async function publishTemplateArtwork(db, { backupDir } = {}) {
     if (!publishChanged && !draftChanged)
       return { changed: false, version: published.version };
     if (backupDir) {
-      await mkdir(backupDir, { recursive: true });
+      await mkdir(backupDir, { recursive: true, mode: 0o700 });
       await writeFile(
         join(backupDir, `before-template-artwork-${Date.now()}.json`),
         JSON.stringify({ published, draft }, null, 2),

@@ -34,7 +34,7 @@ try {
         JSON.stringify(draftContent) !== JSON.stringify(draft.content);
     if (!changed && !draftChanged)
       return { changed: false, version: published.version };
-    await mkdir(join(dataDir, "backups"), { recursive: true });
+    await mkdir(join(dataDir, "backups"), { recursive: true, mode: 0o700 });
     await writeFile(
       join(dataDir, "backups", "before-billing-" + Date.now() + ".json"),
       JSON.stringify({ published, draft }, null, 2),

@@ -171,7 +171,7 @@ service-account JSON privately. Then set:
 
 ```dotenv
 GOOGLE_APPLICATION_CREDENTIALS=/etc/secrets/google-play.json
-PLAY_PACKAGE_NAME=ai.video.generator.image.generator
+PLAY_PACKAGE_NAME=ai.genora.image.video.editor
 PLAY_RTDN_AUDIENCE=<the exact audience configured for your Pub/Sub push subscription>
 PLAY_RTDN_SERVICE_ACCOUNT=<the Pub/Sub push authentication service-account email>
 ```

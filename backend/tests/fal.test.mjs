@@ -1,21 +1,43 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { falInput, falModels, falRequest, queueUrl } from "../server/fal.mjs";
+import {
+  falImageCatalog,
+  falInput,
+  falModels,
+  falRequest,
+  falSettings,
+  nearestAspectRatio,
+  queueUrl,
+} from "../server/fal.mjs";
 
-test("fal presets bound image size, output count and video duration", () => {
+test("fal presets select production image quality and preserve edit shape", () => {
   const image = falInput({ mode: "image", prompt: "A landscape" });
   assert.equal(image.model, falModels.image);
-  assert.equal(image.input.num_images, 1);
-  assert.ok(image.input.image_size.width * image.input.image_size.height < 1e6);
-  assert.equal(image.input.num_inference_steps, 4);
+  assert.equal(image.input.image_size, "square_hd");
+  assert.equal(image.input.output_format, "png");
+  assert.match(image.input.prompt, /PRIMARY CREATIVE BRIEF/);
+  assert.match(image.input.prompt, /LIGHT AND MATERIALS/);
   const edit = falInput(
     { mode: "image", prompt: "A portrait", background: "Original" },
     ["https://r2.example/input"],
+    falSettings,
+    [{ width: 1200, height: 1600 }],
   );
   assert.equal(edit.model, falModels.edit);
-  assert.equal(edit.input.num_inference_steps, 28);
-  assert.match(edit.input.prompt, /original background/);
+  assert.equal(edit.input.aspect_ratio, "3:4");
+  assert.equal(edit.input.image_url, "https://r2.example/input");
+  assert.match(edit.input.prompt, /BACKGROUND LOCK/);
+  assert.match(edit.input.prompt, /IDENTITY LOCK/);
+  const economy = falInput(
+    { mode: "image", prompt: "A landscape" },
+    [],
+    { ...falSettings, models: { ...falSettings.models, image: "fal-ai/flux/schnell" } },
+  );
+  assert.equal(economy.input.num_inference_steps, 4);
+  assert.equal(falImageCatalog.image[2].estimate, "$0.03 at 1 MP");
+  assert.equal(nearestAspectRatio(1920, 1080), "16:9");
   const video = falInput({ mode: "video", prompt: "A landscape" });
+  assert.equal(video.input.prompt, "A landscape");
   assert.equal(video.input.num_frames / video.input.fps, 5.4);
   assert.equal(video.input.video_output_type, "X264 (.mp4)");
   assert.equal(video.input.enable_prompt_expansion, false);
@@ -26,7 +48,7 @@ test("fal presets bound image size, output count and video duration", () => {
 test("fal queue URLs cannot forward credentials to another origin or job", () => {
   const model = falModels.edit,
     id = "request-123";
-  const valid = `https://queue.fal.run/fal-ai/flux-2/requests/${id}/status`;
+  const valid = `https://queue.fal.run/fal-ai/flux-pro/requests/${id}/status`;
   assert.equal(queueUrl(valid, model, id, "/status"), valid);
   for (const bad of [
     valid.replace("queue.fal.run", "evil.example"),

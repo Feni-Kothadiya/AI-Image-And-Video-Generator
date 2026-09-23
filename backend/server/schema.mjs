@@ -239,11 +239,21 @@ export const integrationSchema = z
     models: z
       .object({
         image: z.string().max(150),
+        edit: z.string().max(150).optional(),
         video: z.string().max(150),
         dance: z.string().max(150),
         slideshow: z.string().max(150),
       })
       .strict(),
+    imageSize: z
+      .enum([
+        "square_hd",
+        "portrait_4_3",
+        "portrait_16_9",
+        "landscape_4_3",
+        "landscape_16_9",
+      ])
+      .optional(),
   })
   .strict();
 export function parse(schema, value) {
