@@ -29,6 +29,11 @@ one output is requested. Generation and editing prompts are expanded on the serv
 with composition, lighting, material, anatomy, identity, and bounded-edit constraints.
 No automatic paid upscaling, audio generation, or multi-stage enhancement is performed.
 Only administrators can select models; mobile clients cannot select them.
+Text-to-image and photo editing are separate selections. FLUX.1 Schnell is used only
+when the request has no uploaded photo. A request with an uploaded photo uses the selected
+editing endpoint instead: about $0.022 for a 1 MP Klein input plus 1 MP output, $0.04 for
+Kontext Pro, or $0.08 for Kontext Max. The dashboard labels both selectors and each rate
+separately so an editing charge is not mistaken for a Schnell charge.
 
 Dance uses prompt-guided image animation, not reference-video choreography transfer.
 Slideshow generation remains unavailable for this integration. The app receives
