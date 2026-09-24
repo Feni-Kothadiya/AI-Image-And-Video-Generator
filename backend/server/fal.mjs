@@ -17,8 +17,8 @@ export const falImageCatalog = Object.freeze({
       label: "FLUX.1 Schnell",
       tier: "Economy",
       price: "$0.003 per output megapixel",
-      estimate: "About $0.003 at 1 MP",
-      description: "Fastest and cheapest; best for previews and high-volume drafts.",
+      estimate: "$0.003 per billed MP",
+      description: "Text-to-image only in this app; never used when a photo is uploaded. Fastest and cheapest for previews and high-volume drafts.",
       docs: "https://fal.ai/models/fal-ai/flux/schnell",
     },
     {
@@ -47,7 +47,7 @@ export const falImageCatalog = Object.freeze({
       tier: "Balanced",
       price: "$0.011 per input MP and output MP",
       estimate: "About $0.022 for 1 MP input + 1 MP output",
-      description: "Cost-controlled general editing; the provider normalizes input to 1 MP.",
+      description: "Used for uploaded-photo generations when selected. Cost-controlled editing; roughly $0.022 for a 1 MP input and 1 MP output.",
       docs: "https://fal.ai/models/fal-ai/flux-2/klein/9b/base/edit",
     },
     {
@@ -56,7 +56,7 @@ export const falImageCatalog = Object.freeze({
       tier: "Recommended",
       price: "$0.04 per image",
       estimate: "$0.04 per edit",
-      description: "Strong local edits and character consistency for production use.",
+      description: "Used for uploaded-photo generations when selected. Strong local edits and character consistency for production use.",
       docs: "https://fal.ai/models/fal-ai/flux-pro/kontext",
     },
     {
@@ -65,7 +65,7 @@ export const falImageCatalog = Object.freeze({
       tier: "Maximum",
       price: "$0.08 per image",
       estimate: "$0.08 per edit",
-      description: "Highest prompt adherence and consistency for demanding edits.",
+      description: "Used for uploaded-photo generations when selected. Highest prompt adherence and consistency for demanding edits.",
       docs: "https://fal.ai/models/fal-ai/flux-pro/kontext/max",
     },
   ],
@@ -156,7 +156,6 @@ export function falInput(input, urls = [], settings = falSettings, uploads = [])
           num_images: 1,
           output_format: "png",
           safety_tolerance: "2",
-          enhance_prompt: true,
           ...(aspectRatio ? { aspect_ratio: aspectRatio } : {}),
         },
       };

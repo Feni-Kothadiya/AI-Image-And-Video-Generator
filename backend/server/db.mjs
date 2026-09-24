@@ -9,6 +9,19 @@ export const defaults = JSON.parse(
     "utf8",
   ),
 );
+const legacyImagePrompts = new Map([
+  ["p0", "Create an editorial studio portrait with a warm neutral backdrop and soft directional light. Preserve the face and natural skin texture."],
+  ["p1", "Create a cinematic portrait on a neon-lit city street with blue and magenta bokeh, preserving facial identity."],
+  ["p2", "Create a sunlit editorial portrait with warm golden-hour light and natural flowers."],
+  ["p3", "Create a warm, realistic studio portrait of the couple with natural expressions."],
+  ["p4", "Create a playful miniature-world portrait with oversized everyday objects. Keep it lighthearted and realistic."],
+  ["p5", "Create a graduation portrait with a tasteful gown and cap, soft campus background, and natural lighting."],
+  ["p6", "Restore this photograph with natural detail, balanced colors, and preserved identities."],
+  ["p7", "Create an elegant evening portrait with formal attire and soft cinematic lighting."],
+  ["p8", "Create a joyful birthday portrait with flowers and warm, festive details."],
+  ["p9", "Create a romantic golden-hour portrait with natural expressions and soft greenery."],
+  ["p10", "Create a professional headshot with a clean background, polished business attire, and natural facial detail."],
+]);
 export async function openDatabase(filename, { seed = true } = {}) {
   if (filename !== ":memory:")
     mkdirSync(dirname(filename), { recursive: true, mode: 0o700 });
@@ -143,6 +156,21 @@ async function seedDatabase(db) {
           content.legal.announcement = defaults.legal.announcement;
         if (content.branding?.appName === "AI Image And Video Generator")
           content.branding.appName = defaults.branding.appName;
+        const defaultTemplates = new Map(
+          defaults.templates.map((template) => [template.id, template]),
+        );
+        content.templates = content.templates.map((template) => {
+          const next = structuredClone(template);
+          const replacement = defaultTemplates.get(next.id);
+          if (
+            replacement?.kind === "image" &&
+            next.prompt === legacyImagePrompts.get(next.id)
+          )
+            next.prompt = replacement.prompt;
+          if (!next.imageUrl && replacement?.imageUrl)
+            next.imageUrl = replacement.imageUrl;
+          return next;
+        });
         if (JSON.stringify(content) !== JSON.stringify(saved.content))
           await setSetting(db, key, { ...saved, content });
       }

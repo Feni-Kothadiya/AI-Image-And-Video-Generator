@@ -16,14 +16,15 @@ export function compileEditPrompt(value, { background = "Original" } = {}) {
   const mutation = collapse(value);
   return [
     "SOURCE CHECKPOINT: use the supplied image as the authoritative source.",
-    "REQUESTED MUTATION: " + mutation,
-    "EDIT SCOPE: perform only the requested change in the smallest visually necessary area. Do not add, remove, move, restyle or rewrite unrelated content.",
-    "IDENTITY LOCK: preserve every person's recognizable facial identity, age, expression, skin tone, hair, body proportions and pose unless the requested mutation explicitly names that attribute.",
-    "COMPOSITION LOCK: preserve the source aspect ratio, crop, camera position, perspective, subject placement, lighting direction and overall color grade. Keep text and logos unchanged unless they are the explicit edit target.",
+    "IDENTITY LOCK — HIGHEST PRIORITY: every visible person must remain unmistakably the same individual. Preserve facial geometry, eye shape and spacing, eyebrows, nose, lips, jawline, ears, skin tone, age, ethnicity, hairline, hairstyle and distinctive marks. Do not generate a new face, face-swap, beautify, de-age, age, slim, masculinize, feminize, merge identities or make different people look alike.",
+    "SUBJECT LOCK: preserve the number of people, each person's body proportions and the relationship between subjects. Keep the original expression, gaze and pose unless the creative brief explicitly requests a change to that exact attribute. Hands, limbs, clothing and physical contact must remain anatomically coherent.",
+    "REQUESTED TRANSFORMATION: " + mutation,
+    "EDIT SCOPE: change only the environment, wardrobe, lighting or named target required by the transformation. Treat the face and all unrequested content as protected. Do not add, remove, move, restyle or rewrite unrelated content.",
+    "COMPOSITION LOCK: preserve the source aspect ratio and avoid accidental cropping. Preserve camera perspective and subject placement unless the requested transformation explicitly requires reframing. Keep existing text and logos unchanged unless they are the explicit target.",
     background === "Original"
       ? "BACKGROUND LOCK: keep the original background and its geometry materially unchanged."
       : "BACKGROUND CHANGE: adapt only the background to the requested scene while keeping foreground identity, pose, silhouette and edge detail stable.",
-    "INTEGRATION: allow only the minimal boundary blending, contact shadow, reflection and color spill needed for a believable edit. If the requested target is absent or ambiguous, favor preserving the source instead of inventing a replacement.",
-    "ACCEPTANCE CHECK: the requested change is clear, source identity remains recognizable, protected content is materially stable, anatomy is plausible, and no watermark, caption or unrelated object has been introduced.",
+    "INTEGRATION: allow only the minimal edge blending, contact shadow, reflection and color spill needed for a believable result. Keep real skin texture and facial asymmetry. If the requested target is absent or ambiguous, preserve the source instead of inventing a replacement.",
+    "ACCEPTANCE CHECK: reject the result if any face shape, facial feature, age, skin tone, hairline or person count has drifted. Accept only when the requested transformation is clear, every source identity remains recognizable, protected content is materially stable, anatomy is plausible, and no watermark, caption or unrelated object has been introduced.",
   ].join("\n");
 }

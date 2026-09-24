@@ -357,7 +357,7 @@ function Dashboard() {
         setCsrf(d.csrf);
         setUser(d.user);
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setChecking(false));
   }, []);
   useEffect(() => {
@@ -752,7 +752,7 @@ function Overview({ revision, onPage }) {
                         6,
                         (item.count /
                           Math.max(...data.activity.map((d) => d.count))) *
-                          150,
+                        150,
                       ),
                     }}
                   />
@@ -1171,9 +1171,9 @@ function TemplatesEditor({ content: c, update }) {
                           kind: e.target.value,
                           category:
                             c.categories[
-                              e.target.value === "dance"
-                                ? "video"
-                                : e.target.value
+                            e.target.value === "dance"
+                              ? "video"
+                              : e.target.value
                             ][0],
                           ...(e.target.value === "slideshow"
                             ? { count: 8, duration: 15 }
@@ -1280,16 +1280,16 @@ function TemplatesEditor({ content: c, update }) {
                   checked={editing.enabled}
                   onChange={(v) => setEditing({ ...editing, enabled: v })}
                 />
-                <Toggle label="Premium template (generation still costs coins)" checked={!!editing.premium} onChange={(v)=>setEditing({...editing,premium:v})} />
+                <Toggle label="Premium template (generation still costs coins)" checked={!!editing.premium} onChange={(v) => setEditing({ ...editing, premium: v })} />
               </div>
             </div>
             {c.templates.some(
               (t) => t.id === editing.id && t.id !== original,
             ) && (
-              <div className="callout danger">
-                This template ID already exists.
-              </div>
-            )}
+                <div className="callout danger">
+                  This template ID already exists.
+                </div>
+              )}
             <div className="modal-actions">
               {original && (
                 <Button
@@ -2449,6 +2449,14 @@ function Integrations({ revision, run, busy }) {
             />
           </div>
           <h3 className="model-heading">Image model pricing</h3>
+          <div className="callout">
+            <Shield size={19} />
+            <span>
+              Pricing route: a prompt without an uploaded photo uses the Text-to-image model.
+              Any request containing an uploaded photo uses the Photo-editing model instead.
+              FLUX.1 Schnell is never charged for an uploaded-photo edit.
+            </span>
+          </div>
           <div className="model-options">
             {[...data.imageCatalog.image, ...data.imageCatalog.edit].map((model) => (
               <article className="model-option" key={model.id}>

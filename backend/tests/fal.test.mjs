@@ -28,12 +28,15 @@ test("fal presets select production image quality and preserve edit shape", () =
   assert.equal(edit.input.image_url, "https://r2.example/input");
   assert.match(edit.input.prompt, /BACKGROUND LOCK/);
   assert.match(edit.input.prompt, /IDENTITY LOCK/);
+  assert.match(edit.input.prompt, /Do not generate a new face/);
+  assert.equal("enhance_prompt" in edit.input, false);
   const economy = falInput(
     { mode: "image", prompt: "A landscape" },
     [],
     { ...falSettings, models: { ...falSettings.models, image: "fal-ai/flux/schnell" } },
   );
   assert.equal(economy.input.num_inference_steps, 4);
+  assert.equal(falImageCatalog.image[0].estimate, "$0.003 per billed MP");
   assert.equal(falImageCatalog.image[2].estimate, "$0.03 at 1 MP");
   assert.equal(nearestAspectRatio(1920, 1080), "16:9");
   const video = falInput({ mode: "video", prompt: "A landscape" });

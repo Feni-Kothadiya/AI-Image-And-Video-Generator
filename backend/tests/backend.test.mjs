@@ -30,7 +30,7 @@ async function fixture(
 ) {
   const dir = mkdtempSync(join(tmpdir(), "ai-studio-test-"));
   let db;
-  let cleanupDatabase = async () => {};
+  let cleanupDatabase = async () => { };
   if (process.env.TEST_POSTGRES_URL) {
     const { postgresDriver } = await import("../server/database-driver.mjs");
     const control = postgresDriver(process.env.TEST_POSTGRES_URL);
@@ -299,8 +299,8 @@ test("concurrent daily claims credit once and use server reward amounts", async 
 });
 test("unconfigured generation and billing cannot change coins; verified rewarded ads use server amounts", async (t) => {
   const { guest } = await fixture(t, {
-      verifyRewardedAd: async ({ token }) => token === "verified-test-token",
-    }),
+    verifyRewardedAd: async ({ token }) => token === "verified-test-token",
+  }),
     g = await guest();
   for (const path of ["/api/jobs", "/api/billing/verify"]) {
     const response = await g.call(
@@ -562,8 +562,8 @@ test("multipart uploads are private, reject arbitrary file content, and reports 
     return Buffer.concat([
       Buffer.from(
         "--" +
-          boundary +
-          '\r\nContent-Disposition: form-data; name="file"; filename="image.png"\r\nContent-Type: image/png\r\n\r\n',
+        boundary +
+        '\r\nContent-Disposition: form-data; name="file"; filename="image.png"\r\nContent-Type: image/png\r\n\r\n',
       ),
       bytes,
       Buffer.from("\r\n--" + boundary + "--\r\n"),
@@ -593,18 +593,19 @@ test("multipart uploads are private, reject arbitrary file content, and reports 
   assert.equal(report.statusCode, 201);
   const jobId = randomUUID(), created = now();
   await db.prepare("INSERT INTO jobs(id,user_id,idempotency_key,request,request_hash,status,cost,reward,provider_config,result_url,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)")
-    .run(jobId,a.user.id,"report-job-key-1234",JSON.stringify({mode:"image",prompt:"test result"}),"report-hash","succeeded",0,0,"{}","https://provider.example/result.png",created,created);
+    .run(jobId, a.user.id, "report-job-key-1234", JSON.stringify({ mode: "image", prompt: "test result" }), "report-hash", "succeeded", 0, 0, "{}", "https://provider.example/result.png", created, created);
   const generatedReport = await a.call("/api/reports", "POST", {
     reason: "Deceptive content",
     jobId,
     detail: "The generated result is misleading.",
   });
   assert.equal(generatedReport.statusCode, 201, generatedReport.body);
-  assert.equal((await b.call("/api/reports", "POST", {reason:"Other",jobId})).statusCode,404);
+  assert.equal((await b.call("/api/reports", "POST", { reason: "Other", jobId })).statusCode, 404);
   const reports = (await admin("/reports")).json().reports;
   assert.equal(reports.length, 2);
-  assert.equal(reports[0].job_id, jobId);
-  assert.equal(reports[0].resultUrl, "https://provider.example/result.png");
+  const generated = reports.find((item) => item.job_id === jobId);
+  assert.equal(generated?.job_id, jobId);
+  assert.equal(generated?.resultUrl, "https://provider.example/result.png");
   await admin("/reports/" + report.json().id, "PATCH", { status: "resolved" });
   assert.equal((await admin("/reports")).json().reports.find((item) => item.id === report.json().id).status, "resolved");
 });
@@ -643,9 +644,9 @@ test("worker polls provider jobs, resumes stored state, and credits completion o
       calls++;
       return job.provider_id
         ? {
-            status: "succeeded",
-            resultUrl: "https://cdn.example.com/final.png",
-          }
+          status: "succeeded",
+          resultUrl: "https://cdn.example.com/final.png",
+        }
         : { status: "processing", id: "provider-job-1" };
     },
   };
@@ -682,13 +683,13 @@ test("worker polls provider jobs, resumes stored state, and credits completion o
 test("worker retries gateway failures with the same job id and eventually refunds", async (t) => {
   const ids = [];
   const { guest, db, app } = await fixture(t, {
-      gateway: {
-        run: async (job) => {
-          ids.push(job.id);
-          throw new Error("Provider offline");
-        },
+    gateway: {
+      run: async (job) => {
+        ids.push(job.id);
+        throw new Error("Provider offline");
       },
-    }),
+    },
+  }),
     g = await guest();
   await transaction(
     db,
