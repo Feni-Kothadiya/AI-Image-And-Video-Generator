@@ -560,12 +560,14 @@ test("public app profile is accessible without authentication", async (t) => {
   assert.match(page.headers["content-type"], /text\/html/);
   assert.match(page.headers["cache-control"], /public/);
   assert.match(page.body, /Genora AI Image Video Editor/);
-  assert.match(page.body, /ai\.genora\.image\.video\.editor/);
   assert.match(page.body, /Google Play Billing/);
   assert.match(page.body, /not transferable between users/i);
   assert.match(page.body, /\/privacy/);
   assert.match(page.body, /\/account-deletion/);
-  assert.doesNotMatch(page.body, /admin_session|api\/admin/i);
+  assert.doesNotMatch(
+    page.body,
+    /admin_session|api\/admin|Godhasara|ai\.genora\.image\.video\.editor|developer details|Target audience/i,
+  );
 });
 test("multipart uploads are private, reject arbitrary file content, and reports persist", async (t) => {
   const { app, db, guest, admin } = await fixture(t),
