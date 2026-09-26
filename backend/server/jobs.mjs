@@ -71,20 +71,6 @@ export async function createJob(db, user, key, input, integrationReady) {
       ).n >= 3
     )
       fail(429, "Wait for an existing generation to finish.");
-    if (
-      integration.provider === "fal" &&
-      (
-        await db
-          .prepare(
-            "SELECT count(*) AS n FROM jobs WHERE status IN ('queued','processing')",
-          )
-          .get()
-      ).n >= 2
-    )
-      fail(
-        429,
-        "Two generations are already running. Please try again shortly.",
-      );
     const id = randomUUID(),
       time = now(),
       cost = request.mode === "slideshow" || premium.unlimitedGeneration
@@ -242,7 +228,7 @@ export function createWorker({
           "failed",
           null,
           output.message ||
-            "The provider could not complete this request. Your coins were refunded.",
+          "The provider could not complete this request. Your coins were refunded.",
         );
       else
         await db
@@ -274,10 +260,10 @@ export function createWorker({
   }
   const timer = autoStart
     ? setInterval(() => {
-        void tick().catch(() =>
-          logger?.warn("Job worker will retry after a database failure."),
-        );
-      }, 1500)
+      void tick().catch(() =>
+        logger?.warn("Job worker will retry after a database failure."),
+      );
+    }, 1500)
     : null;
   timer?.unref();
   return {

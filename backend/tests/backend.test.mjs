@@ -91,9 +91,14 @@ async function fixture(
   };
   const admin = (url, method = "GET", payload) =>
     app.inject({ url: "/api/admin" + url, method, headers, payload });
-  const guest = async () => {
+  const guest = async (remoteAddress) => {
     const result = (
-      await app.inject({ url: "/api/auth/guest", method: "POST", payload: {} })
+      await app.inject({
+        url: "/api/auth/guest",
+        method: "POST",
+        payload: {},
+        ...(remoteAddress ? { remoteAddress } : {}),
+      })
     ).json();
     return {
       user: result.user,
@@ -106,6 +111,7 @@ async function fixture(
             authorization: "Bearer " + result.session.token,
             ...extra,
           },
+          ...(remoteAddress ? { remoteAddress } : {}),
         }),
     };
   };
@@ -1268,7 +1274,7 @@ test("fal ambiguous submissions and interrupted submissions cannot create a seco
   assert.equal(submits, 1);
 });
 
-test("fal rejects unavailable configuration and limits active generations without charging rejected jobs", async (t) => {
+test("fal accepts generations from many users and limits only per-account abuse", async (t) => {
   const { falSettings } = await import("../server/fal.mjs");
   const mock = fakeR2();
   const { app, db, guest, admin } = await fixture(t, {
@@ -1289,6 +1295,7 @@ test("fal rejects unavailable configuration and limits active generations withou
     );
   assert.equal((await submit()).statusCode, 202);
   assert.equal((await submit()).statusCode, 202);
+  assert.equal((await submit()).statusCode, 202);
   const coins = (
     await db.prepare("SELECT coins FROM users WHERE id=?").get(owner.user.id)
   ).coins;
@@ -1297,6 +1304,31 @@ test("fal rejects unavailable configuration and limits active generations withou
     (await db.prepare("SELECT coins FROM users WHERE id=?").get(owner.user.id))
       .coins,
     coins,
+  );
+  for (let index = 0; index < 100; index += 1) {
+    const customer = await guest(
+      `10.0.${Math.floor(index / 250)}.${(index % 250) + 1}`,
+    );
+    await transaction(db, () =>
+      credit(db, customer.user.id, 50, "Test funds", `fal-customer-${index}`),
+    );
+    const response = await customer.call(
+      "/api/jobs",
+      "POST",
+      { mode: "image", prompt: `Landscape ${index}` },
+      { "Idempotency-Key": randomUUID() },
+    );
+    assert.equal(response.statusCode, 202, response.body);
+  }
+  assert.equal(
+    (
+      await db
+        .prepare(
+          "SELECT count(*) AS n FROM jobs WHERE status IN ('queued','processing')",
+        )
+        .get()
+    ).n,
+    103,
   );
   assert.equal(
     (
