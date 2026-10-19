@@ -48,14 +48,6 @@ import {
   isFalImageModel,
   normalizeFalSettings,
 } from "./fal.mjs";
-import {
-  createFalGateway,
-  falImageCatalog,
-  falImageSizes,
-  falModels,
-  isFalImageModel,
-  normalizeFalSettings,
-} from "./fal.mjs";
 import { createJob, publicJob, settleJob, createWorker } from "./jobs.mjs";
 import { createPlayBilling } from "./play-billing.mjs";
 import { createBilling } from "./billing.mjs";
@@ -193,11 +185,6 @@ export async function buildApp(options = {}) {
           storage.mode === "r2" &&
           ["image", "video", "dance"].includes(mode)
         )
-          integration.enabled &&
-          falKey &&
-          storage.mode === "r2" &&
-          ["image", "video", "dance"].includes(mode)
-        )
         : !!(
           integration.enabled &&
           integration.secret &&
@@ -242,8 +229,6 @@ export async function buildApp(options = {}) {
         video: ready(integration, "video"),
         dance: ready(integration, "dance"),
         slideshow: ready(integration, "slideshow"),
-        billing: billingReady,
-        ads: adsReady,
         billing: billingReady,
         ads: adsReady,
       },
@@ -600,23 +585,23 @@ export async function buildApp(options = {}) {
     await billing.refreshUser(req.user);
     return billing.catalog(req.user);
   });
-  app.post("/api/billing/checkout", { preHandler: mobile, config: {rateLimit:{max:20,timeWindow:'15 minutes'}} }, async req => {
+  app.post("/api/billing/checkout", { preHandler: mobile, config: { rateLimit: { max: 20, timeWindow: '15 minutes' } } }, async req => {
     if (!razorpay.enabled) fail(503, "Razorpay billing is not configured yet. No payment was created.");
     const input = parse(z.object({ productId: z.string().min(1).max(100) }).strict(), req.body);
     return razorpayBilling.createCheckout(req.user, input.productId);
   });
-  app.post("/api/billing/verify", { preHandler: mobile, config: {rateLimit:{max:60,timeWindow:'1 minute'}} }, async req => {
+  app.post("/api/billing/verify", { preHandler: mobile, config: { rateLimit: { max: 60, timeWindow: '1 minute' } } }, async req => {
     if (!billing.enabled) fail(503, "Billing is not configured yet. No coins were credited.");
     const input = razorpay.enabled
       ? parse(z.object({
-          kind: z.enum(["coins", "subscription"]),
-          checkoutId: z.string().min(1).max(150),
-          paymentId: z.string().min(1).max(150),
-          signature: z.string().min(1).max(256),
-        }).strict(), req.body)
+        kind: z.enum(["coins", "subscription"]),
+        checkoutId: z.string().min(1).max(150),
+        paymentId: z.string().min(1).max(150),
+        signature: z.string().min(1).max(256),
+      }).strict(), req.body)
       : parse(z.object({ productId: z.string().min(1).max(150), token: z.string().min(1).max(4096) }).strict(), req.body);
-    const result = await billing.verify({user: req.user, ...input});
-    return {...result, user: publicUser(await db.prepare("SELECT * FROM users WHERE id=?").get(req.user.id))};
+    const result = await billing.verify({ user: req.user, ...input });
+    return { ...result, user: publicUser(await db.prepare("SELECT * FROM users WHERE id=?").get(req.user.id)) };
   });
   app.post("/api/billing/subscription/cancel", { preHandler: mobile, config: limited }, async req => {
     if (!razorpay.enabled) fail(503, "Razorpay billing is not configured yet.");
