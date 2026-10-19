@@ -28,3 +28,18 @@ export function compileEditPrompt(value, { background = "Original" } = {}) {
     "ACCEPTANCE CHECK: reject the result if any face shape, facial feature, age, skin tone, hairline or person count has drifted. Accept only when the requested transformation is clear, every source identity remains recognizable, protected content is materially stable, anatomy is plausible, and no watermark, caption or unrelated object has been introduced.",
   ].join("\n");
 }
+
+export function compileProductPrompt(value) {
+  const brief = collapse(value);
+  return [
+    "SOURCE PRODUCT CHECKPOINT — HIGHEST PRIORITY: use the uploaded image as the authoritative product reference.",
+    "PRODUCT LOCK: preserve the exact product identity, silhouette, proportions, construction, color, print, texture, materials, finish, hardware, packaging geometry and every visible design detail. Do not redesign, simplify, recolor, mirror, replace, relabel or remove any part of the product.",
+    "LABEL AND BRAND LOCK: any existing logo, label, package artwork or readable product text belongs to the source and must remain materially unchanged. Never invent words, prices, badges, claims or a new brand.",
+    "REQUESTED COMMERCIAL PHOTOSHOOT: " + brief,
+    "PLACEMENT: integrate the exact product into the requested model or scene with realistic scale, perspective, occlusion, fit, drape, contact, gravity, reflections and shadows. A worn product must follow the body naturally without changing its design.",
+    "MODEL SAFETY AND QUALITY: use only an original generic adult model unless the brief explicitly requests an age-appropriate child catalogue model. Do not resemble a public figure. Keep anatomy, hands, limbs and physical contact plausible.",
+    "CATALOGUE QUALITY: use clean professional lighting, accurate material response, crisp product edges and intentional marketplace-safe composition. The product must remain the unmistakable focal point and easy to inspect.",
+    "OUTPUT DISCIPLINE: produce one finished photograph, not a collage or comparison. Do not add duplicate products, captions, watermarks, borders, invented props that cover the product, malformed anatomy, floating objects or meaningless text.",
+    "ACCEPTANCE CHECK: reject any result where product color, geometry, pattern, logo placement, label layout, material, count or key detail has drifted. If a requested transformation conflicts with product accuracy, preserve the product.",
+  ].join("\n");
+}

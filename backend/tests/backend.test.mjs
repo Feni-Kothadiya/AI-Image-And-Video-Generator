@@ -304,10 +304,16 @@ test("concurrent daily claims credit once and use server reward amounts", async 
   );
 });
 test("unconfigured generation and billing cannot change coins; verified rewarded ads use server amounts", async (t) => {
-  const { guest } = await fixture(t, {
+  const { guest, db } = await fixture(t, {
     verifyRewardedAd: async ({ token }) => token === "verified-test-token",
   }),
     g = await guest();
+  // Ads are disabled by default for the first production release. Enable only
+  // this fixture so the verification and reward-crediting path remains tested.
+  const published = await getSetting(db, "published");
+  published.content.features.ads = true;
+  published.content.features.rewardedAds = true;
+  await setSetting(db, "published", published);
   for (const path of ["/api/jobs", "/api/billing/verify"]) {
     const response = await g.call(
       path,

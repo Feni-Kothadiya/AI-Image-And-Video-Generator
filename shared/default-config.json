@@ -842,11 +842,11 @@
     "dance": true,
     "slideshow": true,
     "dailyRewards": true,
-    "ads": true,
-    "bannerAds": true,
-    "appOpenAds": true,
-    "interstitialAds": true,
-    "rewardedAds": true,
+    "ads": false,
+    "bannerAds": false,
+    "appOpenAds": false,
+    "interstitialAds": false,
+    "rewardedAds": false,
     "maintenance": false
   },
   "legal": {

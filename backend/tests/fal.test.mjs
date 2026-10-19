@@ -30,6 +30,16 @@ test("fal presets select production image quality and preserve edit shape", () =
   assert.match(edit.input.prompt, /IDENTITY LOCK/);
   assert.match(edit.input.prompt, /Do not generate a new face/);
   assert.equal("enhance_prompt" in edit.input, false);
+  const product = falInput(
+    { mode: "image", workflow: "product", prompt: "Place this bag in a premium studio", background: "AI Generate", aspectRatio: "3:4" },
+    ["https://r2.example/product"],
+    falSettings,
+    [{ width: 2000, height: 2000 }],
+  );
+  assert.equal(product.input.aspect_ratio, "3:4");
+  assert.match(product.input.prompt, /PRODUCT LOCK/);
+  assert.match(product.input.prompt, /LABEL AND BRAND LOCK/);
+  assert.doesNotMatch(product.input.prompt, /IDENTITY LOCK/);
   const economy = falInput(
     { mode: "image", prompt: "A landscape" },
     [],

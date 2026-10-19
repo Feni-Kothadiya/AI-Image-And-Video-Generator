@@ -225,10 +225,12 @@ export const credentialsSchema = z
 export const jobSchema = z
   .object({
     mode: z.enum(["image", "video", "dance", "slideshow"]),
+    workflow: z.enum(["creative", "product"]).default("creative"),
     prompt: z.string().trim().max(4000),
     templateId: z.string().max(80).optional(),
     uploadIds: z.array(z.string().uuid()).max(30).default([]),
     background: z.enum(["Original", "AI Generate"]).default("Original"),
+    aspectRatio: z.enum(["1:1", "3:4", "2:3", "9:16", "16:9"]).optional(),
   })
   .strict();
 export const integrationSchema = z

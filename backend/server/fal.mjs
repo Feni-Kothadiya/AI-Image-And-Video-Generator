@@ -2,6 +2,7 @@ import { safeResultUrl } from "./gateway.mjs";
 import {
   compileEditPrompt,
   compileGenerationPrompt,
+  compileProductPrompt,
 } from "./image-prompts.mjs";
 
 export const falModels = Object.freeze({
@@ -140,13 +141,15 @@ export function falInput(input, urls = [], settings = falSettings, uploads = [])
   const normalized = normalizeFalSettings({ ...settings, enabled: true });
   if (input.mode === "image") {
     const prompt = urls.length
-      ? compileEditPrompt(input.prompt, { background: input.background })
+      ? input.workflow === "product"
+        ? compileProductPrompt(input.prompt)
+        : compileEditPrompt(input.prompt, { background: input.background })
       : compileGenerationPrompt(input.prompt);
     const model = urls.length
       ? normalized.models.edit
       : normalized.models.image;
     if (urls.length && model.startsWith("fal-ai/flux-pro/kontext")) {
-      const aspectRatio = nearestAspectRatio(uploads[0]?.width, uploads[0]?.height);
+      const aspectRatio = input.aspectRatio || nearestAspectRatio(uploads[0]?.width, uploads[0]?.height);
       return {
         model,
         input: {
