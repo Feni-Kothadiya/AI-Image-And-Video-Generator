@@ -4,7 +4,7 @@ import { resolve, join } from "node:path";
 import { spawn } from "node:child_process";
 const dir = resolve(process.env.DATA_DIR || "./data"),
   target = join(dir, "backups", new Date().toISOString().replace(/[:.]/g, "-"));
-mkdirSync(target, { recursive: true });
+mkdirSync(target, { recursive: true, mode: 0o700 });
 if (process.env.DATABASE_URL) {
   await new Promise((resolve, reject) => {
     const command = spawn(

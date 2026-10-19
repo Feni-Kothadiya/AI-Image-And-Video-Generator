@@ -9,12 +9,20 @@ const activeStates = [
   "SUBSCRIPTION_STATE_CANCELED",
 ];
 export async function premiumEntitlement(db, userId) {
-  const row = await db
+  const play = await db
     .prepare(
       "SELECT MAX(expires_at) AS expiry FROM play_purchases WHERE user_id=? AND kind='subscription' AND status IN ('SUBSCRIPTION_STATE_ACTIVE','SUBSCRIPTION_STATE_IN_GRACE_PERIOD','SUBSCRIPTION_STATE_CANCELED') AND verified_at>?",
     )
     .get(userId, Date.now() - 15 * 60000);
-  const expiresAt = Number(row?.expiry || 0);
+  const razorpay = await db
+    .prepare(
+      "SELECT MAX(expires_at) AS expiry FROM razorpay_subscriptions WHERE user_id=? AND status IN ('authenticated','active','pending','cancelled')",
+    )
+    .get(userId);
+  const expiresAt = Math.max(
+    Number(play?.expiry || 0),
+    Number(razorpay?.expiry || 0),
+  );
   const active = expiresAt > Date.now();
   return {
     active,
@@ -362,5 +370,5 @@ export function createBilling({ db, play, key }) {
           : "coins",
     });
   }
-  return { catalog, verify, refreshUser, reconcile, notification };
+  return { enabled: play.enabled, provider: "google_play", catalog, verify, refreshUser, reconcile, notification };
 }

@@ -108,7 +108,9 @@ code updates. Blueprint configuration changes still require a Blueprint sync.
 
 ## 4. Verify the first deployment without AI spending
 
-The blueprint sets `BACKGROUND_WORKERS_ENABLED=0` and `PLAY_BILLING_ENABLED=0`.
+The blueprint sets `BACKGROUND_WORKERS_ENABLED=0` and asks for
+`PLAY_BILLING_ENABLED` as a private deployment value. Keep billing set to `0`
+until the Google Play service account and notification settings are complete.
 Do not add `FAL_KEY` yet. Background generation and billing reconciliation remain
 paused; keep the dashboard's generation integration disabled during these checks.
 This deployment is for setup verification, not public generation or purchases.
@@ -171,7 +173,7 @@ service-account JSON privately. Then set:
 
 ```dotenv
 GOOGLE_APPLICATION_CREDENTIALS=/etc/secrets/google-play.json
-PLAY_PACKAGE_NAME=ai.video.generator.image.generator
+PLAY_PACKAGE_NAME=ai.genora.image.video.editor
 PLAY_RTDN_AUDIENCE=<the exact audience configured for your Pub/Sub push subscription>
 PLAY_RTDN_SERVICE_ACCOUNT=<the Pub/Sub push authentication service-account email>
 ```

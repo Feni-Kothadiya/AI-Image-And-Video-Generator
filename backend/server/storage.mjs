@@ -150,7 +150,7 @@ export function createStorage({
       try {
         for await (const chunk of stream) {
           bytes += chunk.length;
-          if (bytes > 10 * 1024 * 1024)
+          if (bytes > 30 * 1024 * 1024)
             throw new Error("Input image exceeds the size limit.");
           chunks.push(Buffer.from(chunk));
         }

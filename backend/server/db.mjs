@@ -9,9 +9,37 @@ export const defaults = JSON.parse(
     "utf8",
   ),
 );
+defaults.legal.privacy = defaults.legal.privacy
+  .replace(
+    "Purchase data: Google Play product identifiers, purchase tokens, transaction status, and entitlement information.",
+    "Purchase data: Razorpay order, payment, and subscription identifiers, transaction status, and entitlement information.",
+  )
+  .replace("Google Play service providers", "Razorpay payment service providers");
+defaults.legal.terms = defaults.legal.terms
+  .replace(
+    "Coins, subscriptions, and Google Play\nWhere enabled, digital coins and subscriptions are purchased through Google Play. Prices and billing periods shown by Google Play control the transaction. Coin purchases are consumable and subscriptions renew according to the selected Play offer until cancelled. Manage cancellation through Google Play. Purchase restoration and refund handling depend on Google Play records and applicable law.",
+    "Coins, subscriptions, and Razorpay\nWhere enabled, digital coins and subscriptions are purchased securely through Razorpay. Coin purchases are consumable. The Weekly Pro offer charges ₹1 for the first day and then renews automatically at ₹399 every 7 days until cancelled. You can cancel future renewal inside Genora; access continues through the current paid period. Payment verification, refunds, and entitlement handling depend on Razorpay records and applicable law.",
+  )
+  .replace(
+    "does not cancel a Google Play subscription; cancel subscriptions separately in Google Play.",
+    "does not by itself cancel an active Razorpay mandate; cancel future renewal in the app before deleting your account.",
+  );
+const legacyImagePrompts = new Map([
+  ["p0", "Create an editorial studio portrait with a warm neutral backdrop and soft directional light. Preserve the face and natural skin texture."],
+  ["p1", "Create a cinematic portrait on a neon-lit city street with blue and magenta bokeh, preserving facial identity."],
+  ["p2", "Create a sunlit editorial portrait with warm golden-hour light and natural flowers."],
+  ["p3", "Create a warm, realistic studio portrait of the couple with natural expressions."],
+  ["p4", "Create a playful miniature-world portrait with oversized everyday objects. Keep it lighthearted and realistic."],
+  ["p5", "Create a graduation portrait with a tasteful gown and cap, soft campus background, and natural lighting."],
+  ["p6", "Restore this photograph with natural detail, balanced colors, and preserved identities."],
+  ["p7", "Create an elegant evening portrait with formal attire and soft cinematic lighting."],
+  ["p8", "Create a joyful birthday portrait with flowers and warm, festive details."],
+  ["p9", "Create a romantic golden-hour portrait with natural expressions and soft greenery."],
+  ["p10", "Create a professional headshot with a clean background, polished business attire, and natural facial detail."],
+]);
 export async function openDatabase(filename, { seed = true } = {}) {
   if (filename !== ":memory:")
-    mkdirSync(dirname(filename), { recursive: true });
+    mkdirSync(dirname(filename), { recursive: true, mode: 0o700 });
   const db = sqliteDriver(filename);
   try {
     await db.exec(
@@ -33,10 +61,37 @@ export async function openDatabase(filename, { seed = true } = {}) {
           .run(now());
       });
     }
+    if (
+      !(await db
+        .prepare("SELECT 1 FROM schema_migrations WHERE version=3")
+        .get())
+    ) {
+      await db.transaction(async () => {
+        await db.exec("ALTER TABLE uploads ADD COLUMN width INTEGER");
+        await db.exec("ALTER TABLE uploads ADD COLUMN height INTEGER");
+        await db
+          .prepare("INSERT INTO schema_migrations VALUES(3,?)")
+        .run(now());
+      });
+    }
+    if (
+      !(await db
+        .prepare("SELECT 1 FROM schema_migrations WHERE version=4")
+        .get())
+    ) {
+      await db.transaction(async () => {
+        await db.exec("ALTER TABLE reports ADD COLUMN job_id TEXT");
+        await db.exec("CREATE INDEX IF NOT EXISTS reports_job ON reports(job_id)");
+        await db
+          .prepare("INSERT INTO schema_migrations VALUES(4,?)")
+          .run(now());
+      });
+    }
     await db.exec(
       readFileSync(new URL("./fal-schema.sql", import.meta.url), "utf8"),
     );
     await db.exec(readFileSync(new URL("./billing-schema.sql", import.meta.url), "utf8"));
+    await db.exec(readFileSync(new URL("./razorpay-schema.sql", import.meta.url), "utf8"));
     if (seed) await seedDatabase(db);
     return db;
   } catch (error) {
@@ -55,6 +110,7 @@ export async function openPostgresDatabase(url, { seed = true } = {}) {
         readFileSync(new URL("./fal-schema.sql", import.meta.url), "utf8"),
       );
       await db.exec(readFileSync(new URL("./billing-schema.sql", import.meta.url), "utf8"));
+      await db.exec(readFileSync(new URL("./razorpay-schema.sql", import.meta.url), "utf8"));
     });
     if (seed) await seedDatabase(db);
     return db;
@@ -93,13 +149,47 @@ async function seedDatabase(db) {
         models: { image: "", video: "", dance: "", slideshow: "" },
       });
     } else {
-      // Keep existing installations compatible when new remote feature switches are added.
+      // Keep existing installations compatible and replace only the original
+      // pre-release placeholders. Administrator-authored content is preserved.
       for (const key of ["published", "draft"]) {
         const saved = await getSetting(db, key);
         if (!saved?.content?.features) continue;
-        const features = { ...defaults.features, ...saved.content.features };
-        if (JSON.stringify(features) !== JSON.stringify(saved.content.features))
-          await setSetting(db, key, { ...saved, content: { ...saved.content, features } });
+        const content = structuredClone(saved.content);
+        content.features = { ...defaults.features, ...content.features };
+        if (
+          content.legal?.privacy ===
+          "Privacy policy is being prepared. This app is not yet available for public release."
+        )
+          content.legal.privacy = defaults.legal.privacy;
+        if (
+          content.legal?.terms ===
+          "Terms of use are being prepared. Payments and rewarded advertising are not active."
+        )
+          content.legal.terms = defaults.legal.terms;
+        if (
+          content.legal?.announcement ===
+          "Create something new. AI services will be available when your administrator connects a provider."
+        )
+          content.legal.announcement = defaults.legal.announcement;
+        if (content.branding?.appName === "AI Image And Video Generator")
+          content.branding.appName = defaults.branding.appName;
+        const defaultTemplates = new Map(
+          defaults.templates.map((template) => [template.id, template]),
+        );
+        content.templates = content.templates.map((template) => {
+          const next = structuredClone(template);
+          const replacement = defaultTemplates.get(next.id);
+          if (
+            replacement?.kind === "image" &&
+            next.prompt === legacyImagePrompts.get(next.id)
+          )
+            next.prompt = replacement.prompt;
+          if (!next.imageUrl && replacement?.imageUrl)
+            next.imageUrl = replacement.imageUrl;
+          return next;
+        });
+        if (JSON.stringify(content) !== JSON.stringify(saved.content))
+          await setSetting(db, key, { ...saved, content });
       }
     }
   });

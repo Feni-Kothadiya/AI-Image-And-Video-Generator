@@ -5,8 +5,9 @@ services:
     runtime: node
     plan: free
     region: virginia
+    branch: main
     numInstances: 1
-    autoDeployTrigger: "off"
+    autoDeployTrigger: "commit"
     buildCommand: npm --prefix backend ci && npm --prefix frontend ci --include=dev && npm --prefix frontend run build
     startCommand: node backend/server/render-start.mjs
     healthCheckPath: /api/health
@@ -23,10 +24,24 @@ services:
         value: "1"
       - key: BACKGROUND_WORKERS_ENABLED
         value: "0"
-      - key: PLAY_BILLING_ENABLED
+      - key: RAZORPAY_ENABLED
         value: "0"
-      - key: PLAY_PACKAGE_NAME
-        value: ai.video.generator.image.generator
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      - key: RAZORPAY_WEBHOOK_SECRET
+        sync: false
+      - key: RAZORPAY_PLAN_ID
+        sync: false
+      - key: RAZORPAY_INTRO_AMOUNT_PAISE
+        value: "100"
+      - key: RAZORPAY_INTRO_DAYS
+        value: "1"
+      - key: RAZORPAY_RENEWAL_AMOUNT_PAISE
+        value: "39900"
+      - key: RAZORPAY_TOTAL_COUNT
+        value: "520"
       - key: MEDIA_STORAGE
         value: r2
       - key: R2_REGION

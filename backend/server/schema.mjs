@@ -156,7 +156,7 @@ export const configSchema = z
               /^https:\/\/play\.google\.com\/store\/apps\/details\?id=[a-zA-Z0-9._]+$/.test(
                 v,
               ),
-            "Use a Google Play app link.",
+            "Use a valid Google Play app link, or leave this blank for direct distribution.",
           ),
       })
       .strict(),
@@ -164,7 +164,7 @@ export const configSchema = z
   .strict()
   .superRefine((c, ctx) => {
     const productIds = [...c.coinPacks, ...c.plans].map(p => p.productId).filter(Boolean);
-    if (new Set(productIds).size !== productIds.length) ctx.addIssue({code:"custom",path:["plans"],message:"Use a different Google Play product ID for each pack and plan."});
+    if (new Set(productIds).size !== productIds.length) ctx.addIssue({code:"custom",path:["plans"],message:"Use a different internal product code for each pack and plan."});
     for (const field of ["templates", "plans", "coinPacks"]) {
       const ids = c[field].map((v) => v.id);
       if (new Set(ids).size !== ids.length)
@@ -239,11 +239,21 @@ export const integrationSchema = z
     models: z
       .object({
         image: z.string().max(150),
+        edit: z.string().max(150).optional(),
         video: z.string().max(150),
         dance: z.string().max(150),
         slideshow: z.string().max(150),
       })
       .strict(),
+    imageSize: z
+      .enum([
+        "square_hd",
+        "portrait_4_3",
+        "portrait_16_9",
+        "landscape_4_3",
+        "landscape_16_9",
+      ])
+      .optional(),
   })
   .strict();
 export function parse(schema, value) {

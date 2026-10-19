@@ -29,7 +29,7 @@ export async function verifyPassword(password, encoded) {
   );
 }
 export function masterKey(dataDir) {
-  mkdirSync(dataDir, { recursive: true });
+  mkdirSync(dataDir, { recursive: true, mode: 0o700 });
   const filename = join(dataDir, "master.key");
   if (!existsSync(filename))
     writeFileSync(filename, randomBytes(32), { flag: "wx", mode: 0o600 });

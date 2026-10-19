@@ -19,7 +19,7 @@ try {
     await setSetting(db, "integration", falSettings);
   });
   console.log(
-    "fal configured: Schnell images, Klein photo edits, LongCat Distilled videos. API key stays in the backend environment. No generation was submitted.",
+    "fal configured: FLUX.2 Pro images, Kontext Pro photo edits, LongCat Distilled videos. Model and image-shape controls are available in the admin dashboard. No generation was submitted.",
   );
 } catch {
   console.error(

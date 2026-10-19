@@ -77,7 +77,7 @@ const descriptions = {
   Generations: "Track requests from queue to completion.",
   Reports: "Review feedback and reported content.",
   Purchases:
-    "Verified transactions will appear after Google Play is connected.",
+    "Verified Razorpay transactions and subscription status appear here.",
   "Publish history": "Review releases and restore a previous draft.",
   Integrations: "Connect the services that power creation.",
   "Audit log": "A record of administrative changes.",
@@ -357,7 +357,7 @@ function Dashboard() {
         setCsrf(d.csrf);
         setUser(d.user);
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setChecking(false));
   }, []);
   useEffect(() => {
@@ -752,7 +752,7 @@ function Overview({ revision, onPage }) {
                         6,
                         (item.count /
                           Math.max(...data.activity.map((d) => d.count))) *
-                          150,
+                        150,
                       ),
                     }}
                   />
@@ -777,7 +777,7 @@ function Overview({ revision, onPage }) {
               ["Dynamic content", true],
               ["Image generation", data.services.image],
               ["Video generation", data.services.video],
-              ["Google Play billing", data.services.billing],
+              ["Razorpay billing", data.services.billing],
               ["Rewarded advertising", false],
             ].map(([label, ready]) => (
               <div key={label}>
@@ -969,6 +969,9 @@ function ContentEditor({ content: c, update }) {
             ))}
           </Panel>
           <Panel title="Support & announcements">
+            <div className="callout">
+              Public app links: <a href="/privacy" target="_blank" rel="noreferrer">Privacy policy</a>{" · "}<a href="/terms" target="_blank" rel="noreferrer">Terms</a>{" · "}<a href="/account-deletion" target="_blank" rel="noreferrer">Account deletion</a>
+            </div>
             <Field
               label="Support email"
               type="email"
@@ -976,7 +979,7 @@ function ContentEditor({ content: c, update }) {
               onChange={(e) => set("legal", "supportEmail", e.target.value)}
             />
             <Field
-              label="Google Play app link"
+              label="Optional public app link"
               value={c.legal.playStoreUrl}
               onChange={(e) => set("legal", "playStoreUrl", e.target.value)}
             />
@@ -1168,9 +1171,9 @@ function TemplatesEditor({ content: c, update }) {
                           kind: e.target.value,
                           category:
                             c.categories[
-                              e.target.value === "dance"
-                                ? "video"
-                                : e.target.value
+                            e.target.value === "dance"
+                              ? "video"
+                              : e.target.value
                             ][0],
                           ...(e.target.value === "slideshow"
                             ? { count: 8, duration: 15 }
@@ -1277,16 +1280,16 @@ function TemplatesEditor({ content: c, update }) {
                   checked={editing.enabled}
                   onChange={(v) => setEditing({ ...editing, enabled: v })}
                 />
-                <Toggle label="Premium template (generation still costs coins)" checked={!!editing.premium} onChange={(v)=>setEditing({...editing,premium:v})} />
+                <Toggle label="Premium template (generation still costs coins)" checked={!!editing.premium} onChange={(v) => setEditing({ ...editing, premium: v })} />
               </div>
             </div>
             {c.templates.some(
               (t) => t.id === editing.id && t.id !== original,
             ) && (
-              <div className="callout danger">
-                This template ID already exists.
-              </div>
-            )}
+                <div className="callout danger">
+                  This template ID already exists.
+                </div>
+              )}
             <div className="modal-actions">
               {original && (
                 <Button
@@ -1429,7 +1432,7 @@ function EconomyEditor({ content: c, update }) {
         <span>
           Costs and daily rewards are enforced by the backend. Product labels
           are editable here; actual purchase prices must also be configured in
-          Google Play.
+          Razorpay. The backend always enforces the amount and coin quantity.
         </span>
       </div>
       <div className="two-columns">
@@ -1557,7 +1560,7 @@ function EconomyEditor({ content: c, update }) {
                       coins: "Coins",
                       rupees: "Price in INR",
                       label: "Display price",
-                      productId: "Google Play product ID",
+                      productId: "Internal product code",
                     }[k]
                   }
                   type={["coins", "rupees"].includes(k) ? "number" : "text"}
@@ -1586,7 +1589,7 @@ function EconomyEditor({ content: c, update }) {
         </div>
       </Panel>
       <Panel
-        title="Subscription plans"
+        title="Razorpay subscription display"
         action={
           <Button
             icon={Plus}
@@ -1599,6 +1602,7 @@ function EconomyEditor({ content: c, update }) {
                   period: "month",
                   saving: "",
                   productId: "",
+                  basePlanId: "",
                   enabled: true,
                 });
               })
@@ -1636,8 +1640,8 @@ function EconomyEditor({ content: c, update }) {
                         price: "Display price",
                         period: "Billing period label",
                         saving: "Savings badge",
-                        productId: "Google Play product ID",
-                        basePlanId: "Google Play base plan ID",
+                        productId: "Internal product code",
+                        basePlanId: "Payment provider label",
                       }[k]
                     }
                     value={p[k]}
@@ -1673,7 +1677,7 @@ function MediaLibrary({ revision, run, busy }) {
       <div className="callout">
         <Image size={19} />
         <span>
-          Upload PNG, JPEG, or WebP files up to 10 MB. These are public app
+          Upload PNG, JPEG, or WebP files up to 30 MB. These are public app
           assets. Users' private input photos are kept separate.
         </span>
       </div>
@@ -2184,7 +2188,7 @@ function Reports({ revision, run, busy }) {
             <thead>
               <tr>
                 <th>Report</th>
-                <th>Template</th>
+                <th>Reported content</th>
                 <th>Submitted</th>
                 <th>Status</th>
               </tr>
@@ -2196,7 +2200,21 @@ function Reports({ revision, run, busy }) {
                     <strong>{r.reason}</strong>
                     <small>{r.detail || "No additional details"}</small>
                   </td>
-                  <td>{r.template_id || "General"}</td>
+                  <td>
+                    {r.job_id ? (
+                      <>
+                        <strong>{r.jobMode || "Generation"}</strong>
+                        <small>{r.job_id}</small>
+                        {r.resultUrl && (
+                          <a href={r.resultUrl} target="_blank" rel="noreferrer">
+                            Review output <ArrowUpRight size={14} />
+                          </a>
+                        )}
+                      </>
+                    ) : (
+                      r.template_id || "General"
+                    )}
+                  </td>
                   <td>{date(r.created_at)}</td>
                   <td>
                     <select
@@ -2239,8 +2257,8 @@ function Purchases({ revision }) {
       <div className="callout">
         <Shield size={20} />
         <span>
-          {data.configured ? "Google Play verification is enabled. Coins and premium are granted only after server verification." : "Google Play verification is disabled until its server credentials and products are configured."}
-          {data.configured && !data.notificationsReady && " Billing notification authentication still needs configuration."}
+          {data.configured ? `${data.provider === "razorpay" ? "Razorpay" : "Billing"} verification is enabled. Coins and premium are granted only after server verification.` : "Razorpay verification is disabled until its server credentials and plan are configured."}
+          {data.configured && !data.notificationsReady && " Webhook signature verification still needs configuration."}
         </span>
       </div>
       <Panel title="Purchase history">
@@ -2267,7 +2285,7 @@ function Purchases({ revision }) {
           </div>
         ) : (
           <Empty title="No verified purchases">
-            Connect Google Play products and server verification before
+            Connect Razorpay credentials, plan, webhook, and server verification before
             accepting payments.
           </Empty>
         )}
@@ -2358,6 +2376,7 @@ function Integrations({ revision, run, busy }) {
         enabled: data.enabled,
         gatewayUrl: data.gatewayUrl,
         models: data.models,
+        ...(data.imageSize ? { imageSize: data.imageSize } : {}),
       });
   }, [data]);
   if (!data || !settings) return <Load error={error} />;
@@ -2365,7 +2384,7 @@ function Integrations({ revision, run, busy }) {
     return (
       <Panel
         title="fal.ai generation"
-        description="Images and short videos with economical model settings"
+        description="Choose image quality, edit quality, output shape, and provider cost"
       >
         <div className="callout">
           <Shield size={19} />
@@ -2391,12 +2410,34 @@ function Integrations({ revision, run, busy }) {
             hint="One result per request, with up to two active generations across the app."
           />
           <div className="form-grid">
-            <Field
-              label="Text to image"
-              value={data.falModels.image}
-              readOnly
-            />
-            <Field label="Photo editing" value={data.falModels.edit} readOnly />
+            <Field label="Text-to-image model" hint="Controls new images made from a written prompt.">
+              <select
+                value={settings.models.image}
+                onChange={(e) => setSettings({ ...settings, models: { ...settings.models, image: e.target.value } })}
+              >
+                {data.imageCatalog.image.map((model) => (
+                  <option key={model.id} value={model.id}>{model.label} — {model.estimate}</option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Photo-editing model" hint="Controls generations that include an uploaded photo.">
+              <select
+                value={settings.models.edit}
+                onChange={(e) => setSettings({ ...settings, models: { ...settings.models, edit: e.target.value } })}
+              >
+                {data.imageCatalog.edit.map((model) => (
+                  <option key={model.id} value={model.id}>{model.label} — {model.estimate}</option>
+                ))}
+              </select>
+            </Field>
+            <Field label="New-image shape" hint="Photo edits automatically follow the uploaded image's aspect ratio.">
+              <select
+                value={settings.imageSize}
+                onChange={(e) => setSettings({ ...settings, imageSize: e.target.value })}
+              >
+                {data.imageSizes.map((size) => <option key={size.id} value={size.id}>{size.label}</option>)}
+              </select>
+            </Field>
             <Field
               label="Image to video / dance"
               value={data.falModels.video}
@@ -2408,8 +2449,28 @@ function Integrations({ revision, run, busy }) {
               readOnly
             />
           </div>
+          <h3 className="model-heading">Image model pricing</h3>
+          <div className="callout">
+            <Shield size={19} />
+            <span>
+              Pricing route: a prompt without an uploaded photo uses the Text-to-image model.
+              Any request containing an uploaded photo uses the Photo-editing model instead.
+              FLUX.1 Schnell is never charged for an uploaded-photo edit.
+            </span>
+          </div>
+          <div className="model-options">
+            {[...data.imageCatalog.image, ...data.imageCatalog.edit].map((model) => (
+              <article className="model-option" key={model.id}>
+                <div><strong>{model.label}</strong><Badge tone={model.tier === "Recommended" ? "green" : ""}>{model.tier}</Badge></div>
+                <p className="model-price">{model.price}</p>
+                <p>{model.description}</p>
+                <a href={model.docs} target="_blank" rel="noreferrer">Official fal.ai documentation ↗</a>
+              </article>
+            ))}
+          </div>
+          <p className="muted-copy">Provider prices checked {data.pricingChecked}. Charges are estimates and are paid from your fal.ai balance; verify official pricing before changing your customer coin costs.</p>
           <p>
-            Images: 960 × 960 PNG. Videos: 720p MP4, requested duration 5.4 seconds,
+            Images: PNG in the selected aspect ratio. Photo edits preserve the source shape. Videos: 720p MP4, requested duration 5.4 seconds,
             without generated audio. The provider may return a different duration or resolution.
           </p>
           <p>
@@ -2433,7 +2494,7 @@ function Integrations({ revision, run, busy }) {
       <div className="integration-cards">
         {[
           ["AI generation", Plug, data.enabled ? "Configured" : "Awaiting API"],
-          ["Google Play billing", Coins, data.billing === "configured" ? "Configured" : "Not configured"],
+          ["Razorpay billing", Coins, data.billing === "razorpay_configured" ? "Configured" : "Not configured"],
           ["Rewarded ads", Eye, data.ads === "enabled" ? "Configured" : "Disabled"],
         ].map(([name, Icon, state]) => (
           <div className="integration-card" key={name}>
@@ -2550,7 +2611,7 @@ function Integrations({ revision, run, busy }) {
           </li>
         </ol>
         <p className="muted-copy">
-          Provider-specific mappings, Google Play verification, and ad callback
+          Provider-specific mappings, Razorpay verification, and ad callback
           verification require the corresponding accounts and service details.
           They remain disabled until connected and tested.
         </p>

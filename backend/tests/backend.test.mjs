@@ -15,6 +15,7 @@ import {
   credit,
   getSetting,
   setSetting,
+  defaults,
 } from "../server/db.mjs";
 import { hashPassword } from "../server/security.mjs";
 import { settleJob } from "../server/jobs.mjs";
@@ -25,11 +26,11 @@ import {
 } from "../server/gateway.mjs";
 async function fixture(
   t,
-  { gateway, storage: makeStorage, falKey, falRequest } = {},
+  { gateway, storage: makeStorage, falKey, falRequest, verifyRewardedAd } = {},
 ) {
   const dir = mkdtempSync(join(tmpdir(), "ai-studio-test-"));
   let db;
-  let cleanupDatabase = async () => {};
+  let cleanupDatabase = async () => { };
   if (process.env.TEST_POSTGRES_URL) {
     const { postgresDriver } = await import("../server/database-driver.mjs");
     const control = postgresDriver(process.env.TEST_POSTGRES_URL);
@@ -66,6 +67,7 @@ async function fixture(
     gateway,
     falKey,
     falRequest,
+    verifyRewardedAd,
     allowedHosts: "gateway.example.com",
   });
   t.after(async () => {
@@ -89,9 +91,14 @@ async function fixture(
   };
   const admin = (url, method = "GET", payload) =>
     app.inject({ url: "/api/admin" + url, method, headers, payload });
-  const guest = async () => {
+  const guest = async (remoteAddress) => {
     const result = (
-      await app.inject({ url: "/api/auth/guest", method: "POST", payload: {} })
+      await app.inject({
+        url: "/api/auth/guest",
+        method: "POST",
+        payload: {},
+        ...(remoteAddress ? { remoteAddress } : {}),
+      })
     ).json();
     return {
       user: result.user,
@@ -104,6 +111,7 @@ async function fixture(
             authorization: "Bearer " + result.session.token,
             ...extra,
           },
+          ...(remoteAddress ? { remoteAddress } : {}),
         }),
     };
   };
@@ -285,7 +293,7 @@ test("concurrent daily claims credit once and use server reward amounts", async 
     Array.from({ length: 8 }, () => g.call("/api/rewards/daily", "POST", {})),
   );
   assert.equal(responses.filter((r) => r.json().claimed).length, 1);
-  assert.equal((await g.call("/api/me")).json().user.coins, 30);
+  assert.equal((await g.call("/api/me")).json().user.coins, defaults.rewards.welcome + 17);
   assert.equal(
     (
       await db
@@ -295,8 +303,10 @@ test("concurrent daily claims credit once and use server reward amounts", async 
     1,
   );
 });
-test("unconfigured generation and billing cannot change coins; rewarded ads use server amounts", async (t) => {
-  const { guest } = await fixture(t),
+test("unconfigured generation and billing cannot change coins; verified rewarded ads use server amounts", async (t) => {
+  const { guest } = await fixture(t, {
+    verifyRewardedAd: async ({ token }) => token === "verified-test-token",
+  }),
     g = await guest();
   for (const path of ["/api/jobs", "/api/billing/verify"]) {
     const response = await g.call(
@@ -309,16 +319,27 @@ test("unconfigured generation and billing cannot change coins; rewarded ads use 
     );
     assert.equal(response.statusCode, 503, response.body);
   }
-  assert.equal((await g.call("/api/me")).json().user.coins, 13);
+  assert.equal((await g.call("/api/me")).json().user.coins, defaults.rewards.welcome);
+  assert.equal(
+    (
+      await g.call("/api/rewards/ad", "POST", {
+        claimId: randomUUID(),
+        offer: "single",
+        verificationToken: "unverified-token-value",
+      })
+    ).statusCode,
+    403,
+  );
+  assert.equal((await g.call("/api/me")).json().user.coins, defaults.rewards.welcome);
   const reward = await g.call(
     "/api/rewards/ad",
     "POST",
-    { claimId: randomUUID(), offer: "single" },
+    { claimId: randomUUID(), offer: "single", verificationToken: "verified-test-token" },
     { "Idempotency-Key": randomUUID() },
   );
   assert.equal(reward.statusCode, 200, reward.body);
   assert.equal(reward.json().amount, 5);
-  assert.equal((await g.call("/api/me")).json().user.coins, 18);
+  assert.equal((await g.call("/api/me")).json().user.coins, defaults.rewards.welcome + defaults.rewards.ad);
 });
 test("job idempotency, insufficient funds, ownership, failure refunds, and duplicate settlement", async (t) => {
   const { guest, db } = await fixture(t, {
@@ -328,7 +349,16 @@ test("job idempotency, insufficient funds, ownership, failure refunds, and dupli
     b = await guest();
   await transaction(
     db,
-    async () => await credit(db, a.user.id, 87, "Test funds", "test"),
+    async () => {
+      await credit(db, a.user.id, 87, "Test funds", "test");
+      await credit(
+        db,
+        b.user.id,
+        -defaults.rewards.welcome,
+        "Test empty wallet",
+        "empty-wallet",
+      );
+    },
   );
   const idempotency = randomUUID(),
     input = { mode: "image", prompt: "A realistic flower" };
@@ -340,7 +370,7 @@ test("job idempotency, insufficient funds, ownership, failure refunds, and dupli
   for (const r of results) assert.equal(r.statusCode, 202, r.body);
   const id = results[0].json().id;
   assert.ok(results.every((r) => r.json().id === id));
-  assert.equal((await a.call("/api/me")).json().user.coins, 60);
+  assert.equal((await a.call("/api/me")).json().user.coins, defaults.rewards.welcome + 87 - defaults.costs.image);
   assert.equal(
     (
       await a.call(
@@ -369,7 +399,7 @@ test("job idempotency, insufficient funds, ownership, failure refunds, and dupli
     await settleJob(db, id, "failed", null, "Duplicate failure"),
     false,
   );
-  assert.equal((await a.call("/api/me")).json().user.coins, 100);
+  assert.equal((await a.call("/api/me")).json().user.coins, defaults.rewards.welcome + 87);
 });
 test("successful jobs award configured completion rewards once; queue cancellation refunds", async (t) => {
   const { guest, db } = await fixture(t, {
@@ -394,7 +424,7 @@ test("successful jobs award configured completion rewards once; queue cancellati
   const id = result.json().id;
   await settleJob(db, id, "succeeded", "https://cdn.example.com/result.png");
   await settleJob(db, id, "succeeded", "https://cdn.example.com/result.png");
-  assert.equal((await g.call("/api/me")).json().user.coins, 64);
+  assert.equal((await g.call("/api/me")).json().user.coins, defaults.rewards.welcome + 87 - defaults.costs.image + defaults.rewards.image);
   const queued = (
     await g.call(
       "/api/jobs",
@@ -407,7 +437,7 @@ test("successful jobs award configured completion rewards once; queue cancellati
     (await g.call("/api/jobs/" + queued.id + "/cancel", "POST", {})).statusCode,
     200,
   );
-  assert.equal((await g.call("/api/me")).json().user.coins, 64);
+  assert.equal((await g.call("/api/me")).json().user.coins, defaults.rewards.welcome + 87 - defaults.costs.image + defaults.rewards.image);
   assert.equal(
     (await g.call("/api/jobs/" + queued.id + "/cancel", "POST", {})).statusCode,
     409,
@@ -420,7 +450,7 @@ test("admin adjustments are idempotent, auditable, and cannot overdraw; suspensi
   const a = await admin("/users/" + g.user.id + "/coins", "POST", body);
   assert.equal(a.statusCode, 200, a.body);
   await admin("/users/" + g.user.id + "/coins", "POST", body);
-  assert.equal((await g.call("/api/me")).json().user.coins, 38);
+  assert.equal((await g.call("/api/me")).json().user.coins, defaults.rewards.welcome + 25);
   assert.equal(
     (
       await admin("/users/" + g.user.id + "/coins", "POST", {
@@ -434,7 +464,7 @@ test("admin adjustments are idempotent, auditable, and cannot overdraw; suspensi
     (
       await admin("/users/" + g.user.id + "/coins", "POST", {
         ...body,
-        amount: -100,
+        amount: -(defaults.rewards.welcome + 26),
         requestId: randomUUID(),
       })
     ).statusCode,
@@ -467,7 +497,7 @@ test("account registration retains balance, login works, and deletion requires r
   });
   assert.equal(signed.statusCode, 200, signed.body);
   assert.equal(signed.json().user.id, g.user.id);
-  assert.equal(signed.json().user.coins, 13);
+  assert.equal(signed.json().user.coins, defaults.rewards.welcome);
   assert.equal(
     (
       await g.call("/api/me", "DELETE", {
@@ -491,8 +521,62 @@ test("account registration retains balance, login works, and deletion requires r
     undefined,
   );
 });
+test("public legal pages expose web account deletion for registered users", async (t) => {
+  const { app, guest, db } = await fixture(t),
+    g = await guest(),
+    credentials = {
+      email: "delete-me@example.com",
+      password: "strong-password-123",
+    };
+  assert.equal(
+    (await g.call("/api/auth/register", "POST", credentials)).statusCode,
+    200,
+  );
+  for (const url of ["/privacy", "/terms", "/account-deletion"]) {
+    const page = await app.inject(url);
+    assert.equal(page.statusCode, 200, page.body);
+    assert.match(page.headers["content-type"], /text\/html/);
+    assert.doesNotMatch(page.body, /being prepared/i);
+  }
+  assert.equal(
+    (
+      await app.inject({
+        url: "/api/account-deletion",
+        method: "POST",
+        payload: { ...credentials, password: "wrong-password", confirmation: "DELETE" },
+      })
+    ).statusCode,
+    401,
+  );
+  const deleted = await app.inject({
+    url: "/api/account-deletion",
+    method: "POST",
+    payload: { ...credentials, confirmation: "DELETE" },
+  });
+  assert.equal(deleted.statusCode, 200, deleted.body);
+  assert.equal(
+    await db.prepare("SELECT * FROM users WHERE id=?").get(g.user.id),
+    undefined,
+  );
+});
+test("public app profile is accessible without authentication", async (t) => {
+  const { app } = await fixture(t);
+  const page = await app.inject("/genora");
+  assert.equal(page.statusCode, 200, page.body);
+  assert.match(page.headers["content-type"], /text\/html/);
+  assert.match(page.headers["cache-control"], /public/);
+  assert.match(page.body, /Genora AI Image Video Editor/);
+  assert.match(page.body, /Razorpay/);
+  assert.match(page.body, /not transferable between users/i);
+  assert.match(page.body, /\/privacy/);
+  assert.match(page.body, /\/account-deletion/);
+  assert.doesNotMatch(
+    page.body,
+    /admin_session|api\/admin|Godhasara|ai\.genora\.image\.video\.editor|developer details|Target audience/i,
+  );
+});
 test("multipart uploads are private, reject arbitrary file content, and reports persist", async (t) => {
-  const { app, guest, admin } = await fixture(t),
+  const { app, db, guest, admin } = await fixture(t),
     a = await guest(),
     b = await guest();
   const boundary = "test-boundary";
@@ -500,8 +584,8 @@ test("multipart uploads are private, reject arbitrary file content, and reports 
     return Buffer.concat([
       Buffer.from(
         "--" +
-          boundary +
-          '\r\nContent-Disposition: form-data; name="file"; filename="image.png"\r\nContent-Type: image/png\r\n\r\n',
+        boundary +
+        '\r\nContent-Disposition: form-data; name="file"; filename="image.png"\r\nContent-Type: image/png\r\n\r\n',
       ),
       bytes,
       Buffer.from("\r\n--" + boundary + "--\r\n"),
@@ -529,9 +613,23 @@ test("multipart uploads are private, reject arbitrary file content, and reports 
     templateId: "p0",
   });
   assert.equal(report.statusCode, 201);
-  assert.equal((await admin("/reports")).json().reports.length, 1);
+  const jobId = randomUUID(), created = now();
+  await db.prepare("INSERT INTO jobs(id,user_id,idempotency_key,request,request_hash,status,cost,reward,provider_config,result_url,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)")
+    .run(jobId, a.user.id, "report-job-key-1234", JSON.stringify({ mode: "image", prompt: "test result" }), "report-hash", "succeeded", 0, 0, "{}", "https://provider.example/result.png", created, created);
+  const generatedReport = await a.call("/api/reports", "POST", {
+    reason: "Deceptive content",
+    jobId,
+    detail: "The generated result is misleading.",
+  });
+  assert.equal(generatedReport.statusCode, 201, generatedReport.body);
+  assert.equal((await b.call("/api/reports", "POST", { reason: "Other", jobId })).statusCode, 404);
+  const reports = (await admin("/reports")).json().reports;
+  assert.equal(reports.length, 2);
+  const generated = reports.find((item) => item.job_id === jobId);
+  assert.equal(generated?.job_id, jobId);
+  assert.equal(generated?.resultUrl, "https://provider.example/result.png");
   await admin("/reports/" + report.json().id, "PATCH", { status: "resolved" });
-  assert.equal((await admin("/reports")).json().reports[0].status, "resolved");
+  assert.equal((await admin("/reports")).json().reports.find((item) => item.id === report.json().id).status, "resolved");
 });
 test("gateway URL policy rejects local destinations and non-HTTPS results", () => {
   for (const ip of [
@@ -568,9 +666,9 @@ test("worker polls provider jobs, resumes stored state, and credits completion o
       calls++;
       return job.provider_id
         ? {
-            status: "succeeded",
-            resultUrl: "https://cdn.example.com/final.png",
-          }
+          status: "succeeded",
+          resultUrl: "https://cdn.example.com/final.png",
+        }
         : { status: "processing", id: "provider-job-1" };
     },
   };
@@ -600,20 +698,20 @@ test("worker polls provider jobs, resumes stored state, and credits completion o
     (await g.call("/api/jobs/" + job.id)).json().status,
     "succeeded",
   );
-  assert.equal((await g.call("/api/me")).json().user.coins, 64);
+  assert.equal((await g.call("/api/me")).json().user.coins, defaults.rewards.welcome + 87 - defaults.costs.image + defaults.rewards.image);
   await app.worker.tick();
   assert.equal(calls, 2);
 });
 test("worker retries gateway failures with the same job id and eventually refunds", async (t) => {
   const ids = [];
   const { guest, db, app } = await fixture(t, {
-      gateway: {
-        run: async (job) => {
-          ids.push(job.id);
-          throw new Error("Provider offline");
-        },
+    gateway: {
+      run: async (job) => {
+        ids.push(job.id);
+        throw new Error("Provider offline");
       },
-    }),
+    },
+  }),
     g = await guest();
   await transaction(
     db,
@@ -634,7 +732,7 @@ test("worker retries gateway failures with the same job id and eventually refund
   assert.equal(new Set(ids).size, 1);
   assert.equal(ids.length, 5);
   assert.equal((await g.call("/api/jobs/" + job.id)).json().status, "failed");
-  assert.equal((await g.call("/api/me")).json().user.coins, 100);
+  assert.equal((await g.call("/api/me")).json().user.coins, defaults.rewards.welcome + 87);
 });
 test("database survives close/reopen with content and ledger intact", async () => {
   const dir = mkdtempSync(join(tmpdir(), "ai-studio-persistence-")),
@@ -879,7 +977,7 @@ test("R2 persistent storage failure refunds once and never repeats the AI genera
   }
   assert.equal(calls, 1);
   assert.equal((await g.call("/api/jobs/" + id)).json().status, "failed");
-  assert.equal((await g.call("/api/me")).json().user.coins, 100);
+  assert.equal((await g.call("/api/me")).json().user.coins, defaults.rewards.welcome + 87);
   assert.equal(
     (
       await db
@@ -952,7 +1050,7 @@ test("overlapping worker ticks dispatch one provider request", async (t) => {
   assert.equal(job.statusCode, 202);
   await Promise.all(Array.from({ length: 8 }, () => app.worker.tick()));
   assert.equal(calls, 1);
-  assert.equal((await g.call("/api/me")).json().user.coins, 64);
+  assert.equal((await g.call("/api/me")).json().user.coins, defaults.rewards.welcome + 87 - defaults.costs.image + defaults.rewards.image);
 });
 
 test("a photo upload finishing after account deletion is removed from R2", async (t) => {
@@ -1027,12 +1125,39 @@ test("fal integration sends private R2 URLs, persists queue IDs, stores outputs 
     dance: true,
     slideshow: false,
     billing: false,
-    ads: true,
+    ads: false,
   });
   assert.ok(!config.body.includes("fal-test-key"));
   const settings = await admin("/integration");
   assert.equal(settings.json().hasKey, true);
+  assert.equal(settings.json().imageCatalog.image[2].estimate, "$0.03 at 1 MP");
   assert.ok(!settings.body.includes("fal-test-key"));
+  const selectedSettings = {
+    ...falSettings,
+    imageSize: "portrait_16_9",
+    models: {
+      ...falSettings.models,
+      image: "fal-ai/flux/schnell",
+      edit: "fal-ai/flux-pro/kontext/max",
+    },
+  };
+  assert.equal(
+    (await admin("/integration", "PUT", { settings: selectedSettings })).statusCode,
+    200,
+  );
+  assert.equal((await getSetting(db, "integration")).imageSize, "portrait_16_9");
+  assert.equal(
+    (
+      await admin("/integration", "PUT", {
+        settings: {
+          ...selectedSettings,
+          models: { ...selectedSettings.models, image: "unsupported/model" },
+        },
+      })
+    ).statusCode,
+    400,
+  );
+  await setSetting(db, "integration", falSettings);
   const owner = await guest(),
     other = await guest();
   await transaction(db, () =>
@@ -1149,7 +1274,7 @@ test("fal ambiguous submissions and interrupted submissions cannot create a seco
   assert.equal(submits, 1);
 });
 
-test("fal rejects unavailable configuration and limits active generations without charging rejected jobs", async (t) => {
+test("fal accepts generations from many users and limits only per-account abuse", async (t) => {
   const { falSettings } = await import("../server/fal.mjs");
   const mock = fakeR2();
   const { app, db, guest, admin } = await fixture(t, {
@@ -1170,6 +1295,7 @@ test("fal rejects unavailable configuration and limits active generations withou
     );
   assert.equal((await submit()).statusCode, 202);
   assert.equal((await submit()).statusCode, 202);
+  assert.equal((await submit()).statusCode, 202);
   const coins = (
     await db.prepare("SELECT coins FROM users WHERE id=?").get(owner.user.id)
   ).coins;
@@ -1178,6 +1304,31 @@ test("fal rejects unavailable configuration and limits active generations withou
     (await db.prepare("SELECT coins FROM users WHERE id=?").get(owner.user.id))
       .coins,
     coins,
+  );
+  for (let index = 0; index < 100; index += 1) {
+    const customer = await guest(
+      `10.0.${Math.floor(index / 250)}.${(index % 250) + 1}`,
+    );
+    await transaction(db, () =>
+      credit(db, customer.user.id, 50, "Test funds", `fal-customer-${index}`),
+    );
+    const response = await customer.call(
+      "/api/jobs",
+      "POST",
+      { mode: "image", prompt: `Landscape ${index}` },
+      { "Idempotency-Key": randomUUID() },
+    );
+    assert.equal(response.statusCode, 202, response.body);
+  }
+  assert.equal(
+    (
+      await db
+        .prepare(
+          "SELECT count(*) AS n FROM jobs WHERE status IN ('queued','processing')",
+        )
+        .get()
+    ).n,
+    103,
   );
   assert.equal(
     (
