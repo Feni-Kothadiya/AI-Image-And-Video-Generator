@@ -48,6 +48,14 @@ import {
   isFalImageModel,
   normalizeFalSettings,
 } from "./fal.mjs";
+import {
+  createFalGateway,
+  falImageCatalog,
+  falImageSizes,
+  falModels,
+  isFalImageModel,
+  normalizeFalSettings,
+} from "./fal.mjs";
 import { createJob, publicJob, settleJob, createWorker } from "./jobs.mjs";
 import { createPlayBilling } from "./play-billing.mjs";
 import { createBilling } from "./billing.mjs";
@@ -185,6 +193,11 @@ export async function buildApp(options = {}) {
           storage.mode === "r2" &&
           ["image", "video", "dance"].includes(mode)
         )
+          integration.enabled &&
+          falKey &&
+          storage.mode === "r2" &&
+          ["image", "video", "dance"].includes(mode)
+        )
         : !!(
           integration.enabled &&
           integration.secret &&
@@ -229,6 +242,8 @@ export async function buildApp(options = {}) {
         video: ready(integration, "video"),
         dance: ready(integration, "dance"),
         slideshow: ready(integration, "slideshow"),
+        billing: billingReady,
+        ads: adsReady,
         billing: billingReady,
         ads: adsReady,
       },
