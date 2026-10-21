@@ -73,7 +73,9 @@ export async function createJob(db, user, key, input, integrationReady) {
       fail(429, "Wait for an existing generation to finish.");
     const id = randomUUID(),
       time = now(),
-      cost = request.mode === "slideshow" || premium.unlimitedGeneration
+      imageIncludedWithPro =
+        request.mode === "image" && premium.unlimitedGeneration,
+      cost = request.mode === "slideshow" || imageIncludedWithPro
         ? 0
         : config.costs[request.mode];
     const reward =

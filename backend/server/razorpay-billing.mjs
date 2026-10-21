@@ -183,7 +183,7 @@ export function createRazorpayBilling({ db, razorpay }) {
         key: razorpay.keyId,
         checkoutId: current.subscription_id,
         name: "Genora AI Pro",
-        description: "₹1 for 1 day, then ₹399 every week",
+        description: "Unlimited AI images for ₹1 today, then ₹399 every week",
         email: user.email,
       };
     await validatedPlan();
@@ -234,7 +234,7 @@ export function createRazorpayBilling({ db, razorpay }) {
       key: razorpay.keyId,
       checkoutId: subscription.id,
       name: "Genora AI Pro",
-      description: "₹1 for 1 day, then ₹399 every week",
+      description: "Unlimited AI images for ₹1 today, then ₹399 every week",
       email: user.email,
     };
   }

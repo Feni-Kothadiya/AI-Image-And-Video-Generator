@@ -18,7 +18,7 @@ defaults.legal.privacy = defaults.legal.privacy
 defaults.legal.terms = defaults.legal.terms
   .replace(
     "Coins, subscriptions, and Google Play\nWhere enabled, digital coins and subscriptions are purchased through Google Play. Prices and billing periods shown by Google Play control the transaction. Coin purchases are consumable and subscriptions renew according to the selected Play offer until cancelled. Manage cancellation through Google Play. Purchase restoration and refund handling depend on Google Play records and applicable law.",
-    "Coins, subscriptions, and Razorpay\nWhere enabled, digital coins and subscriptions are purchased securely through Razorpay. Coin purchases are consumable. The Weekly Pro offer charges ₹1 for the first day and then renews automatically at ₹399 every 7 days until cancelled. You can cancel future renewal inside Genora; access continues through the current paid period. Payment verification, refunds, and entitlement handling depend on Razorpay records and applicable law.",
+    "Coins, subscriptions, and Razorpay\nWhere enabled, digital coins and subscriptions are purchased securely through Razorpay. Coin purchases are consumable. While Weekly Pro is active, eligible AI image generations are unlimited and do not deduct coins. The Weekly Pro offer charges ₹1 for the first day and then renews automatically at ₹399 every 7 days until cancelled. You can cancel future renewal inside Genora; access continues through the current paid period. Payment verification, refunds, and entitlement handling depend on Razorpay records and applicable law.",
   )
   .replace(
     "does not cancel a Google Play subscription; cancel subscriptions separately in Google Play.",
@@ -71,7 +71,7 @@ export async function openDatabase(filename, { seed = true } = {}) {
         await db.exec("ALTER TABLE uploads ADD COLUMN height INTEGER");
         await db
           .prepare("INSERT INTO schema_migrations VALUES(3,?)")
-        .run(now());
+          .run(now());
       });
     }
     if (

@@ -407,6 +407,41 @@ test("job idempotency, insufficient funds, ownership, failure refunds, and dupli
   );
   assert.equal((await a.call("/api/me")).json().user.coins, defaults.rewards.welcome + 87);
 });
+test("active Razorpay trial includes image generation without deducting coins", async (t) => {
+  const { guest, db } = await fixture(t, {
+    gateway: { run: async () => ({ status: "failed" }) },
+  });
+  const customer = await guest();
+  const createdAt = now();
+  const trialEndsAt = Date.now() + 24 * 60 * 60 * 1000;
+  await db
+    .prepare(
+      "INSERT INTO razorpay_subscriptions(subscription_id,user_id,plan_id,status,start_at,current_start,current_end,expires_at,verified_at,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+    )
+    .run(
+      "sub_active_trial",
+      customer.user.id,
+      "plan_weekly",
+      "authenticated",
+      Math.floor(trialEndsAt / 1000),
+      0,
+      0,
+      trialEndsAt,
+      Date.now(),
+      createdAt,
+      createdAt,
+    );
+  const balanceBefore = (await customer.call("/api/me")).json().user.coins;
+  const response = await customer.call(
+    "/api/jobs",
+    "POST",
+    { mode: "image", prompt: "A premium product photograph" },
+    { "Idempotency-Key": randomUUID() },
+  );
+  assert.equal(response.statusCode, 202, response.body);
+  assert.equal(response.json().cost, 0);
+  assert.equal((await customer.call("/api/me")).json().user.coins, balanceBefore);
+});
 test("successful jobs award configured completion rewards once; queue cancellation refunds", async (t) => {
   const { guest, db } = await fixture(t, {
     gateway: {
@@ -869,6 +904,11 @@ test("R2 saves image/video outputs before success, retries storage without regen
       },
     },
   });
+  // Video is disabled in the production catalog, but this storage test still
+  // exercises both supported backend result types in an isolated fixture.
+  const published = await getSetting(db, "published");
+  published.content.features.video = true;
+  await setSetting(db, "published", published);
   const owner = await guest(),
     other = await guest();
   await transaction(
@@ -1124,6 +1164,12 @@ test("fal integration sends private R2 URLs, persists queue IDs, stores outputs 
     falRequest: request,
   });
   await setSetting(db, "integration", falSettings);
+  // Production hides video generation. Enable it only in this integration
+  // fixture so the backend adapters for image, video and dance remain covered.
+  const published = await getSetting(db, "published");
+  published.content.features.video = true;
+  published.content.features.dance = true;
+  await setSetting(db, "published", published);
   const config = await app.inject("/api/config");
   assert.deepEqual(config.json().services, {
     image: true,
