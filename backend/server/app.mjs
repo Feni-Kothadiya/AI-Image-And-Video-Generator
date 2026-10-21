@@ -207,7 +207,8 @@ export async function buildApp(options = {}) {
     content.home.featuredIds = content.home.featuredIds.filter((id) =>
       content.templates.some((t) => t.id === id),
     );
-    const billingReady = razorpay.enabled || (allowLegacyPlay && play.enabled);
+    const purchasesEnabled = content.features.purchases !== false;
+    const billingReady = purchasesEnabled && (razorpay.enabled || (allowLegacyPlay && play.enabled));
     const adsReady = content.features.ads && typeof verifyRewardedAd === "function";
     if (!billingReady) {
       content.plans = [];

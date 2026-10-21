@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { openDatabase, now } from "../server/db.mjs";
+import { getSetting, openDatabase, setSetting, now } from "../server/db.mjs";
 import { createRazorpayBilling } from "../server/razorpay-billing.mjs";
 
 function mockRazorpay() {
@@ -88,6 +88,35 @@ test("Razorpay coin orders use server prices and credit exactly once", async (t)
   await Promise.all([billing.verify(request), billing.verify(request)]);
   assert.equal((await db.prepare("SELECT coins FROM users WHERE id=?").get(user.id)).coins, 50);
   assert.equal((await db.prepare("SELECT count(*) AS n FROM ledger WHERE user_id=?").get(user.id)).n, 1);
+});
+
+test("automatic guest wallets can purchase without email authentication", async (t) => {
+  const { db, razorpay, billing } = await fixture(t);
+  const guest = { id: "guest-buyer", email: null, status: "active" };
+  await db
+    .prepare("INSERT INTO users(id,email,created_at) VALUES(?,?,?)")
+    .run(guest.id, guest.email, now());
+  const catalog = await billing.catalog(guest);
+  assert.equal(catalog.enabled, true);
+  assert.equal(catalog.requiresAccount, false);
+  const checkout = await billing.createCheckout(guest, "pack-50");
+  assert.equal(checkout.checkoutId, "order_test");
+  assert.equal(checkout.email, null);
+  assert.equal(razorpay.created.orders[0].notes.user_id, guest.id);
+});
+
+test("admin purchase switch hides products and blocks checkout", async (t) => {
+  const { db, user, billing } = await fixture(t);
+  const published = await getSetting(db, "published");
+  published.content.features.purchases = false;
+  await setSetting(db, "published", published);
+  const catalog = await billing.catalog(user);
+  assert.equal(catalog.enabled, false);
+  assert.deepEqual(catalog.products, []);
+  await assert.rejects(
+    billing.createCheckout(user, "pack-50"),
+    /Purchases are currently disabled/,
+  );
 });
 
 test("weekly checkout creates ₹1 one-day access followed by ₹399 weekly", async (t) => {

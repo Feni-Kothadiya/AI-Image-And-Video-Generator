@@ -67,13 +67,14 @@ export function createRazorpayBilling({ db, razorpay }) {
 
   async function catalog(user) {
     const content = await configuredContent();
+    const purchasesEnabled = content.features.purchases !== false;
     const weekly = content.plans.find((plan) => plan.id === "weekly" && plan.enabled);
     return {
       provider: "razorpay",
-      enabled: razorpay.enabled,
-      requiresAccount: !user.email,
+      enabled: razorpay.enabled && purchasesEnabled,
+      requiresAccount: false,
       testMode: razorpay.testMode,
-      products: [
+      products: purchasesEnabled ? [
         ...coinProducts(content).map((product) => ({
           id: product.id,
           productId: product.productId,
@@ -97,7 +98,7 @@ export function createRazorpayBilling({ db, razorpay }) {
           introPrice: "₹1.00",
           introDays: razorpay.settings.introDays,
         }] : []),
-      ],
+      ] : [],
       premium: await premiumEntitlement(db, user.id),
       refundDebt: await billingDebt(db, user.id),
     };
@@ -106,8 +107,9 @@ export function createRazorpayBilling({ db, razorpay }) {
   async function createCheckout(user, productId) {
     if (!razorpay.enabled)
       fail(503, "Razorpay billing is not configured yet. No payment was created.");
-    if (!user.email) fail(409, "Register or sign in before purchasing.");
     const content = await configuredContent();
+    if (content.features.purchases === false)
+      fail(503, "Purchases are currently disabled. No payment was created.");
     const coin = coinProducts(content).find((product) => product.id === productId);
     if (coin) {
       const recent = await db

@@ -950,6 +950,7 @@ function ContentEditor({ content: c, update }) {
                     dance: "AI Dance",
                     slideshow: "Slideshow templates",
                     dailyRewards: "Daily rewards",
+                    purchases: "Purchases & Pro offers",
                     ads: "All advertising",
                     bannerAds: "Bottom banner ads",
                     appOpenAds: "Launch ads",
@@ -963,7 +964,9 @@ function ContentEditor({ content: c, update }) {
                 hint={
                   key === "maintenance"
                     ? "Stops generation and reward claims. Browsing stays available."
-                    : undefined
+                    : key === "purchases"
+                      ? "Shows the ₹1 trial, subscriptions, and coin packs. Turn off to leave only free daily reward coins."
+                      : undefined
                 }
               />
             ))}

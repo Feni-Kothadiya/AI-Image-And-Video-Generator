@@ -133,6 +133,7 @@ export const configSchema = z
         dance: z.boolean(),
         slideshow: z.boolean(),
         dailyRewards: z.boolean(),
+        purchases: z.boolean(),
         ads: z.boolean(),
         bannerAds: z.boolean(),
         appOpenAds: z.boolean(),
@@ -164,7 +165,7 @@ export const configSchema = z
   .strict()
   .superRefine((c, ctx) => {
     const productIds = [...c.coinPacks, ...c.plans].map(p => p.productId).filter(Boolean);
-    if (new Set(productIds).size !== productIds.length) ctx.addIssue({code:"custom",path:["plans"],message:"Use a different internal product code for each pack and plan."});
+    if (new Set(productIds).size !== productIds.length) ctx.addIssue({ code: "custom", path: ["plans"], message: "Use a different internal product code for each pack and plan." });
     for (const field of ["templates", "plans", "coinPacks"]) {
       const ids = c[field].map((v) => v.id);
       if (new Set(ids).size !== ids.length)
