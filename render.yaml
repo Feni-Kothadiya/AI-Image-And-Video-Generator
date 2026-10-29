@@ -23,7 +23,7 @@ services:
       - key: TRUST_PROXY
         value: "1"
       - key: BACKGROUND_WORKERS_ENABLED
-        value: "0"
+        value: "1"
       - key: PLAY_REVIEW_ACCESS_CODE
         sync: false
       - key: RAZORPAY_ENABLED
