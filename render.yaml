@@ -24,6 +24,8 @@ services:
         value: "1"
       - key: BACKGROUND_WORKERS_ENABLED
         value: "0"
+      - key: PLAY_REVIEW_ACCESS_CODE
+        sync: false
       - key: RAZORPAY_ENABLED
         value: "0"
       - key: RAZORPAY_KEY_ID

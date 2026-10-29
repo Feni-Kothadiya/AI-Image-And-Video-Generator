@@ -9,6 +9,19 @@ const activeStates = [
   "SUBSCRIPTION_STATE_CANCELED",
 ];
 export async function premiumEntitlement(db, userId) {
+  const reviewer = await db
+    .prepare("SELECT reviewer_access FROM users WHERE id=?")
+    .get(userId);
+  if (reviewer?.reviewer_access)
+    return {
+      active: true,
+      adFree: true,
+      premiumTemplates: true,
+      unlimitedGeneration: true,
+      renews: false,
+      expiresAt: null,
+      reviewerAccess: true,
+    };
   const play = await db
     .prepare(
       "SELECT MAX(expires_at) AS expiry FROM play_purchases WHERE user_id=? AND kind='subscription' AND status IN ('SUBSCRIPTION_STATE_ACTIVE','SUBSCRIPTION_STATE_IN_GRACE_PERIOD','SUBSCRIPTION_STATE_CANCELED') AND verified_at>?",
@@ -16,7 +29,16 @@ export async function premiumEntitlement(db, userId) {
     .get(userId, Date.now() - 15 * 60000);
   const razorpay = await db
     .prepare(
-      "SELECT MAX(expires_at) AS expiry FROM razorpay_subscriptions WHERE user_id=? AND status IN ('authenticated','active','pending','cancelled')",
+      `SELECT s.expires_at AS expiry,s.status
+       FROM razorpay_subscriptions s
+       WHERE s.user_id=?
+         AND s.status IN ('authenticated','active','pending','cancelled')
+         AND EXISTS (
+           SELECT 1 FROM razorpay_subscription_payments p
+           WHERE p.subscription_id=s.subscription_id AND p.status='captured'
+         )
+       ORDER BY s.expires_at DESC
+       LIMIT 1`,
     )
     .get(userId);
   const expiresAt = Math.max(
@@ -29,7 +51,12 @@ export async function premiumEntitlement(db, userId) {
     adFree: active,
     premiumTemplates: active,
     unlimitedGeneration: active,
+    renews:
+      active &&
+      Number(razorpay?.expiry || 0) >= Number(play?.expiry || 0) &&
+      razorpay?.status !== "cancelled",
     expiresAt: active ? new Date(expiresAt).toISOString() : null,
+    reviewerAccess: false,
   };
 }
 export async function billingDebt(db, userId) {

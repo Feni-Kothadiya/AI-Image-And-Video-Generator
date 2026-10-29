@@ -16,12 +16,16 @@ function unixMilliseconds(value) {
   return Number.isFinite(number) && number > 0 ? number * 1000 : 0;
 }
 
-function subscriptionExpiry(subscription) {
-  if (!entitlementStatuses.has(subscription.status)) return 0;
-  return Math.max(
-    unixMilliseconds(subscription.current_end),
-    unixMilliseconds(subscription.start_at),
-  );
+function capturedPaymentExpiry(subscription, payment, settings) {
+  if (payment?.status !== "captured") return 0;
+  const amount = Number(payment.amount || 0);
+  if (amount === settings.introAmount) {
+    const paidAt = unixMilliseconds(payment.created_at) || Date.now();
+    return paidAt + settings.introDays * 86400000;
+  }
+  if (amount === settings.renewalAmount)
+    return unixMilliseconds(subscription.current_end);
+  return 0;
 }
 
 function coinProducts(content) {
@@ -183,7 +187,6 @@ export function createRazorpayBilling({ db, razorpay }) {
         key: razorpay.keyId,
         checkoutId: current.subscription_id,
         name: "Genora AI Pro",
-        description: "Unlimited AI images for ₹1 today, then ₹399 every week",
         email: user.email,
       };
     await validatedPlan();
@@ -234,7 +237,6 @@ export function createRazorpayBilling({ db, razorpay }) {
       key: razorpay.keyId,
       checkoutId: subscription.id,
       name: "Genora AI Pro",
-      description: "Unlimited AI images for ₹1 today, then ₹399 every week",
       email: user.email,
     };
   }
@@ -294,9 +296,31 @@ export function createRazorpayBilling({ db, razorpay }) {
     if (!saved || !owner) fail(404, "Subscription record was not found.");
     if (saved.user_id && owner !== saved.user_id)
       fail(403, "This subscription belongs to another account.");
-    if (subscription.plan_id !== razorpay.planId)
+    if (subscription.plan_id !== saved.plan_id)
       fail(400, "Subscription plan does not match.");
-    const expiresAt = subscriptionExpiry(subscription);
+    if (
+      payment &&
+      (payment.subscription_id !== subscription.id ||
+        payment.currency !== razorpay.settings.currency)
+    )
+      fail(409, "Subscription payment does not match.");
+    const previousCaptured = await db
+      .prepare(
+        "SELECT 1 FROM razorpay_subscription_payments WHERE subscription_id=? AND status='captured' LIMIT 1",
+      )
+      .get(subscription.id);
+    const paymentCaptured = payment?.status === "captured";
+    const paidExpiry = capturedPaymentExpiry(
+      subscription,
+      payment,
+      razorpay.settings,
+    );
+    if (paymentCaptured && !paidExpiry)
+      fail(409, "Subscription payment amount does not match the configured offer.");
+    const expiresAt =
+      previousCaptured || paymentCaptured
+        ? Math.max(Number(saved.expires_at || 0), paidExpiry)
+        : 0;
     await db
       .prepare(
         "UPDATE razorpay_subscriptions SET status=?,auth_payment_id=coalesce(auth_payment_id,?),start_at=?,current_start=?,current_end=?,expires_at=?,verified_at=?,updated_at=? WHERE subscription_id=?",

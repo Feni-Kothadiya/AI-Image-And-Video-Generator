@@ -54,7 +54,7 @@ function mockRazorpay() {
         status: "cancelled",
         start_at: Math.floor(Date.now() / 1000),
         current_start: Math.floor(Date.now() / 1000),
-        current_end: Math.floor(Date.now() / 1000) + 86400,
+        current_end: Math.floor(Date.now() / 1000) + 7 * 86400,
       };
     },
   };
@@ -125,6 +125,7 @@ test("weekly checkout creates ₹1 one-day access followed by ₹399 weekly", as
   const checkout = await billing.createCheckout(user, "weekly");
   const request = razorpay.created.subscriptions[0];
   assert.equal(checkout.checkoutId, "sub_test");
+  assert.equal("description" in checkout, false);
   assert.equal(request.plan_id, "plan_weekly");
   assert.equal(request.addons[0].item.amount, 100);
   assert.equal(request.total_count, 520);
@@ -135,6 +136,7 @@ test("weekly checkout creates ₹1 one-day access followed by ₹399 weekly", as
     status: "captured",
     amount: 100,
     currency: "INR",
+    created_at: Math.floor(Date.now() / 1000),
   });
   const verified = await billing.verify({
     user,
@@ -144,9 +146,30 @@ test("weekly checkout creates ₹1 one-day access followed by ₹399 weekly", as
     signature: "valid",
   });
   assert.equal(verified.premium.active, true);
+  assert.equal(verified.premium.renews, true);
+  const trialExpiry = Date.parse(verified.premium.expiresAt);
+  assert.ok(trialExpiry >= Date.now() + 86400000 - 5000);
+  assert.ok(trialExpiry <= Date.now() + 86400000 + 5000);
   await billing.cancel(user);
   assert.deepEqual(razorpay.created.cancellations, [{ id: "sub_test", atCycleEnd: true }]);
   assert.equal((await db.prepare("SELECT status FROM razorpay_subscriptions WHERE subscription_id='sub_test'").get()).status, "cancelled");
+  const cancelled = await billing.catalog(user);
+  assert.equal(cancelled.premium.active, true);
+  assert.equal(cancelled.premium.renews, false);
+  assert.equal(Date.parse(cancelled.premium.expiresAt), trialExpiry);
+});
+
+test("a cancelled mandate without a captured payment never grants premium", async (t) => {
+  const { db, user, billing } = await fixture(t);
+  await billing.createCheckout(user, "weekly");
+  await db
+    .prepare(
+      "UPDATE razorpay_subscriptions SET status='cancelled',expires_at=? WHERE subscription_id='sub_test'",
+    )
+    .run(Date.now() + 7 * 86400000);
+  const catalog = await billing.catalog(user);
+  assert.equal(catalog.premium.active, false);
+  assert.equal(catalog.premium.expiresAt, null);
 });
 
 test("webhook replay is idempotent", async (t) => {

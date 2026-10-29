@@ -87,6 +87,20 @@ export async function openDatabase(filename, { seed = true } = {}) {
           .run(now());
       });
     }
+    if (
+      !(await db
+        .prepare("SELECT 1 FROM schema_migrations WHERE version=5")
+        .get())
+    ) {
+      await db.transaction(async () => {
+        await db.exec(
+          "ALTER TABLE users ADD COLUMN reviewer_access INTEGER NOT NULL DEFAULT 0",
+        );
+        await db
+          .prepare("INSERT INTO schema_migrations VALUES(5,?)")
+          .run(now());
+      });
+    }
     await db.exec(
       readFileSync(new URL("./fal-schema.sql", import.meta.url), "utf8"),
     );
@@ -255,6 +269,7 @@ export function publicUser(user) {
     coins: user.coins,
     lastClaimDate: user.last_claim,
     streak: user.streak,
+    reviewerAccess: !!user.reviewer_access,
     createdAt: user.created_at,
   };
 }

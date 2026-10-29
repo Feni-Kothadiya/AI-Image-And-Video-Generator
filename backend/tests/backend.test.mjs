@@ -26,7 +26,7 @@ import {
 } from "../server/gateway.mjs";
 async function fixture(
   t,
-  { gateway, storage: makeStorage, falKey, falRequest, verifyRewardedAd } = {},
+  { gateway, storage: makeStorage, falKey, falRequest, verifyRewardedAd, reviewerAccessCode } = {},
 ) {
   const dir = mkdtempSync(join(tmpdir(), "ai-studio-test-"));
   let db;
@@ -68,6 +68,7 @@ async function fixture(
     falKey,
     falRequest,
     verifyRewardedAd,
+    reviewerAccessCode,
     allowedHosts: "gateway.example.com",
   });
   t.after(async () => {
@@ -431,6 +432,11 @@ test("active Razorpay trial includes image generation without deducting coins", 
       createdAt,
       createdAt,
     );
+  await db
+    .prepare(
+      "INSERT INTO razorpay_subscription_payments(payment_id,subscription_id,amount,status,created_at) VALUES(?,?,?,?,?)",
+    )
+    .run("pay_trial", "sub_active_trial", 100, "captured", createdAt);
   const balanceBefore = (await customer.call("/api/me")).json().user.coins;
   const response = await customer.call(
     "/api/jobs",
@@ -441,6 +447,70 @@ test("active Razorpay trial includes image generation without deducting coins", 
   assert.equal(response.statusCode, 202, response.body);
   assert.equal(response.json().cost, 0);
   assert.equal((await customer.call("/api/me")).json().user.coins, balanceBefore);
+});
+test("Google Play reviewer code unlocks premium templates and zero-coin generation", async (t) => {
+  const reviewerCode = "google-play-reviewer-test-code-2026";
+  const { guest, db } = await fixture(t, {
+    reviewerAccessCode: reviewerCode,
+    gateway: { run: async () => ({ status: "failed" }) },
+  });
+  const reviewer = await guest();
+  assert.equal(reviewer.user.reviewerAccess, false);
+  assert.equal(
+    (
+      await reviewer.call("/api/reviewer-access", "POST", {
+        code: "incorrect-reviewer-code",
+      })
+    ).statusCode,
+    401,
+  );
+  assert.equal(
+    (await db.prepare("SELECT reviewer_access FROM users WHERE id=?").get(reviewer.user.id))
+      .reviewer_access,
+    0,
+  );
+  const activated = await reviewer.call("/api/reviewer-access", "POST", {
+    code: reviewerCode,
+  });
+  assert.equal(activated.statusCode, 200, activated.body);
+  assert.equal(activated.json().user.reviewerAccess, true);
+  assert.equal((await reviewer.call("/api/me")).json().user.reviewerAccess, true);
+  const catalog = (await reviewer.call("/api/billing/catalog")).json();
+  assert.equal(catalog.premium.active, true);
+  assert.equal(catalog.premium.reviewerAccess, true);
+  assert.equal(catalog.premium.unlimitedGeneration, true);
+  assert.equal(catalog.premium.expiresAt, null);
+
+  const uploadId = randomUUID();
+  await db
+    .prepare(
+      "INSERT INTO uploads(id,user_id,filename,mime,bytes,public,created_at) VALUES(?,?,?,?,?,0,?)",
+    )
+    .run(uploadId, reviewer.user.id, "review-sample.jpg", "image/jpeg", 1024, now());
+  const before = (await reviewer.call("/api/me")).json().user.coins;
+  const generation = await reviewer.call(
+    "/api/jobs",
+    "POST",
+    {
+      mode: "image",
+      templateId: "p1",
+      prompt: "Create the premium reviewer sample",
+      uploadIds: [uploadId],
+    },
+    { "Idempotency-Key": randomUUID() },
+  );
+  assert.equal(generation.statusCode, 202, generation.body);
+  assert.equal(generation.json().cost, 0);
+  assert.equal((await reviewer.call("/api/me")).json().user.coins, before);
+  await reviewer.call("/api/reviewer-access", "POST", { code: reviewerCode });
+  assert.equal(
+    (
+      await db
+        .prepare("SELECT count(*) AS n FROM audit WHERE action='reviewer.access.activated'")
+        .get()
+    ).n,
+    1,
+  );
 });
 test("successful jobs award configured completion rewards once; queue cancellation refunds", async (t) => {
   const { guest, db } = await fixture(t, {
